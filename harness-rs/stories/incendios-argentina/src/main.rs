@@ -7,11 +7,14 @@
 //! incendios check           readability rules (fails the build when broken) -> build/readability.md
 //! incendios assets          render rasters (fire layers, MODIS scars, sun, grain) -> build/assets
 //! incendios music           procedural score mastered to the story's LUFS -> build/assets/score.wav
-//! incendios build           all of the above, then render -> build/<slug>.mp4, then qa
-//! incendios qa [video.mp4]  QA frames + report (loudness of the MP4, duration, rules, min text size drawn)
-//! incendios render -o out.mp4  full render in chunks (INCENDIOS_CHUNKS, default 6), parts joined, score muxed
+//! incendios build [--final]           all of the above, then render -> build/<slug>.mp4, then qa
+//! incendios qa [video.mp4] [--final]  QA frames + report (loudness of the MP4, duration, size, rules, min text size)
+//! incendios render -o out.mp4 [--final]  full render in chunks (INCENDIOS_CHUNKS, default 6), parts joined, score muxed
 //! incendios render|frame|strip|timeline|audio ...   the fframes CLI (see `incendios help`)
 //! ```
+//!
+//! Resolution: every render is a 1280×720 draft (`[video] draft_height`) unless `--final` (or `DATAVID_FINAL=1`) asks
+//! for the full design canvas (1920×1080). The story is always laid out on the design canvas; only the output is scaled.
 mod assets;
 mod facts;
 mod music;
@@ -22,7 +25,7 @@ mod timeline;
 mod verify;
 
 use anyhow::{Context, Result};
-use datavid::story::StoryFile;
+use datavid::story::{Resolution, StoryFile};
 use datavid::{Facts, Story};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -68,6 +71,29 @@ fn cmd_check(sp: &Path) -> Result<datavid::rules::Report> {
     Ok(rep)
 }
 
+/// set on the re-run of a range render, so the fframes CLI handles it
+pub const PASSTHROUGH: &str = "INCENDIOS_PASSTHROUGH";
+
+fn chunk_count() -> usize {
+    std::env::var("INCENDIOS_CHUNKS").ok().and_then(|v| v.parse().ok()).unwrap_or(6)
+}
+
+/// `render` without a frame range (only flags and the value of `-o`): the whole video. `--help` is never a render.
+fn is_full_render(args: &[String]) -> bool {
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        return false;
+    }
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        if a == "-o" || a == "--output" || a == "--scale" {
+            it.next();
+        } else if !a.starts_with('-') {
+            return false;
+        }
+    }
+    true
+}
+
 fn main() -> ExitCode {
     match run() {
         Ok(c) => c,
@@ -84,6 +110,7 @@ fn run() -> Result<ExitCode> {
     let dir = sp.parent().unwrap().to_path_buf();
     std::fs::create_dir_all(dir.join("build"))?;
     let ok = ExitCode::SUCCESS;
+    let res = Resolution::from_args(&args);
     match args.get(1).map(|s| s.as_str()) {
         Some("prep") => prep::run(&StoryFile::load(&sp)?, &dir, &args[2..]).map(|_| ok),
         Some("verify") => verify::run(&StoryFile::load(&sp)?, &dir).map(|_| ok),
@@ -99,8 +126,8 @@ fn run() -> Result<ExitCode> {
         }
         Some("qa") => {
             let (story, facts) = load_story(&sp)?;
-            let video = args.get(2).map(PathBuf::from).unwrap_or_else(|| story.build_dir().join(format!("{}.mp4", story.file.story.slug)));
-            qa::run(&story, &facts, &video).map(|_| ok)
+            let video = args[2..].iter().find(|a| !a.starts_with("--")).map(PathBuf::from).unwrap_or_else(|| story.build_dir().join(format!("{}.mp4", story.file.story.slug)));
+            qa::run(&story, &facts, &video, res).map(|_| ok)
         }
         Some("build") => {
             prep::run(&StoryFile::load(&sp)?, &dir, &[])?;
@@ -110,15 +137,25 @@ fn run() -> Result<ExitCode> {
             assets::run(&story, &facts)?;
             music::run(&story, &facts)?;
             let out = story.build_dir().join(format!("{}.mp4", story.file.story.slug));
-            render::render_chunked(&story, &out, 6)?;
-            qa::run(&story, &facts, &out).map(|_| ok)
+            render::render_chunked(&story, &out, chunk_count(), res)?;
+            qa::run(&story, &facts, &out, res).map(|_| ok)
         }
-        Some("render") if !args[2..].iter().any(|a| !a.starts_with('-') && !args[2..].windows(2).any(|w| w[0] == "-o" && &w[1] == a)) && std::env::var_os("INCENDIOS_ASSETS").is_none() => {
+        Some("render") if is_full_render(&args[2..]) && std::env::var_os("INCENDIOS_ASSETS").is_none() => {
             // a full render (no range): chunked, so only the rasters each part uses are in memory
             let (story, _) = load_story(&sp)?;
             let out = args.windows(2).find(|w| w[0] == "-o" || w[0] == "--output").map(|w| PathBuf::from(&w[1])).unwrap_or_else(|| PathBuf::from("out.mp4"));
-            let n = std::env::var("INCENDIOS_CHUNKS").ok().and_then(|v| v.parse().ok()).unwrap_or(6);
-            render::render_chunked(&story, &out, n).map(|_| ok)
+            render::render_chunked(&story, &out, chunk_count(), res).map(|_| ok)
+        }
+        Some("render") if std::env::var_os(PASSTHROUGH).is_none() => {
+            // a range render goes to fframes at the requested resolution: re-run with an explicit --scale (and without
+            // our own --final flag, which fframes does not know)
+            let (story, _) = load_story(&sp)?;
+            let mut a: Vec<String> = args[1..].iter().filter(|x| *x != "--final").cloned().collect();
+            if !a.iter().any(|x| x == "--scale") {
+                a.extend(["--scale".to_string(), res.scale(&story.file.video).to_string()]);
+            }
+            let st = std::process::Command::new(std::env::current_exe()?).args(&a).env(PASSTHROUGH, "1").status()?;
+            Ok(if st.success() { ok } else { ExitCode::FAILURE })
         }
         _ => {
             // everything else goes to the fframes CLI (render, frame, strip, timeline, audio, inspect, ...)

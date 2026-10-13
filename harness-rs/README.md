@@ -31,6 +31,23 @@ cargo run --release -- build                    # prep -> facts -> check -> asse
 ```
 
 Or step by step: `prep`, `verify`, `facts`, `check`, `assets`, `music`, `render -o out.mp4`, `qa out.mp4`.
+
+### Resolution: drafts first
+
+Every render is a **1280×720 draft** unless you ask for the final cut:
+
+```bash
+cargo run --release -- build              # 1280×720 draft (default)
+cargo run --release -- build --final      # 1920×1080, only once the cut is approved
+cargo run --release -- render -o out.mp4 --final
+DATAVID_FINAL=1 cargo run --release -- build
+```
+
+The story is always laid out on the design canvas (`[video] width/height`, 1920×1080): positions, font sizes and the
+readability rules (≥ 48 px) are in design pixels; only the output is scaled (`[video] draft_height`, default 720).
+`qa` checks the file against the resolution you asked for (pass the same `--final` to `qa`). A draft render also links
+each chunk to PNG copies pre-scaled to the draft size (`build/assets_draft/`, rebuilt when a source raster is newer),
+so a chunk decodes ~44 % of the pixels.
 Every fframes command works too: `frame 12.5s`, `strip all -n 12`, `svg 30s`, `audio analyze`.
 Outputs land in `build/` (`facts.json`, `asserts.txt`, `readability.md`, `assets/`, `qa/QA.md` and QA frames).
 
@@ -78,7 +95,17 @@ fframes decodes the whole media folder the first time a frame draws an image: ~1
 (no range) therefore runs in chunks (`INCENDIOS_CHUNKS`, default 6), each in its own process: a probe pass records the
 `<image href>` of every frame without drawing, then the chunk renders with only those rasters (~1.5–1.8 GB RSS). The
 parts are joined without re-encoding and the score is muxed once with the `ffmpeg` CLI. A range (`render 10s..20s`)
-renders in one process as before.
+renders in one process as before (at the draft size unless `--final` or an explicit `--scale`).
+
+Chunks run one after the other on purpose: fframes already keeps both cores of the sandbox busy inside one process, so
+parallel chunks would only double the memory.
+
+### Where the time goes
+
+The 14-year timelapse (≈ 8–12 s) is the expensive part: up to ~50 monthly fire rasters screened together plus a
+full-frame bloom, about 2 s per 1080p frame on 2 cores; the rest of the video costs ~0.15 s per frame. The fire layer
+and the closing embers draw their rasters once and add the bloom in the same filter (`datavid::svg::bloom_screen`);
+before, each group was drawn twice (sharp copy + blurred copy).
 
 ## Sandbox notes
 

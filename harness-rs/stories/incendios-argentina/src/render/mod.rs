@@ -475,7 +475,9 @@ pub fn render_cli(story: &Story, facts: &Facts, args: Option<Vec<String>>) -> Re
 /// which the OOM killer stopped in a 7 GB sandbox shared with other builds. Each chunk first runs a probe pass
 /// (`INCENDIOS_PROBE`: record every `<image href>`, draw nothing), then renders with `INCENDIOS_ASSETS` pointing at a
 /// folder holding just those files. The parts are joined without re-encoding and the score is muxed once (ffmpeg CLI).
-pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Result<()> {
+///
+/// `res` picks the output size (1280×720 drafts by default, the 1920×1080 design canvas with `--final`).
+pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize, res: datavid::story::Resolution) -> Result<()> {
     let exe = std::env::current_exe()?;
     let frames = story.frames();
     let work = story.build_dir().join("chunks");
@@ -483,15 +485,24 @@ pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Re
     std::fs::create_dir_all(&work)?;
     let src = story.build_dir().join("assets");
     let n = chunks.max(1);
+    let scale = res.scale(&story.file.video).to_string();
+    let (ow, oh) = res.size(&story.file.video);
+    eprintln!("render: {ow}x{oh} ({res:?}), {n} chunks");
     let mut list = String::new();
     for k in 0..n {
         let (a, b) = (frames * k / n, frames * (k + 1) / n);
         let range = format!("{a}f..{b}f");
         let dir = work.join(format!("assets_{k}"));
-        let (nused, bytes) = subset_assets(story, &["render", &range, "--scale", "0.125", "-o", &work.join(format!("probe_{k}.mp4")).display().to_string()], &dir)?;
+        let (nused, bytes) = subset_assets(story, &["render", &range, "--scale", "0.125", "-o", &work.join(format!("probe_{k}.mp4")).display().to_string()], &dir, res.scale(&story.file.video))?;
         eprintln!("chunk {}/{n}: frames {range}, {nused} rasters ({:.1} MB on disk)", k + 1, bytes as f64 / 1e6);
         let part = work.join(format!("part_{k:02}.mp4"));
-        let st = std::process::Command::new(&exe).args(["render", &range, "-o"]).arg(&part).env("INCENDIOS_ASSETS", &dir).env("INCENDIOS_NO_AUDIO", "1").status()?;
+        let st = std::process::Command::new(&exe)
+            .args(["render", &range, "--scale", &scale, "-o"])
+            .arg(&part)
+            .env("INCENDIOS_ASSETS", &dir)
+            .env("INCENDIOS_NO_AUDIO", "1")
+            .env(crate::PASSTHROUGH, "1")
+            .status()?;
         anyhow::ensure!(st.success(), "render of chunk {k} ({range}) failed: {st}");
         let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::remove_file(work.join(format!("probe_{k}.mp4")));
@@ -515,7 +526,10 @@ pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Re
 
 /// Run this binary with `args` as a probe (`INCENDIOS_PROBE`: frames record their `<image href>` and draw nothing, no
 /// rasters loaded), then fill `dest` with hard links to just the rasters those frames use. Returns (count, bytes).
-pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path) -> Result<(usize, u64)> {
+///
+/// With `scale` < 1 (draft renders) each PNG is linked from a cache of copies pre-scaled by `scale`
+/// (`build/assets_draft/`, refreshed when the source is newer), so the chunk decodes ~`scale²` of the pixels.
+pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path, scale: f64) -> Result<(usize, u64)> {
     let src = story.build_dir().join("assets");
     let _ = std::fs::remove_dir_all(dest);
     let empty = dest.with_extension("empty");
@@ -528,6 +542,7 @@ pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path) -> Re
         .env("INCENDIOS_PROBE", &probe)
         .env("INCENDIOS_ASSETS", &empty)
         .env("INCENDIOS_NO_AUDIO", "1")
+        .env(crate::PASSTHROUGH, "1")
         .env_remove("INCENDIOS_DUMP_SVG")
         .stdout(std::process::Stdio::null())
         .status()?;
@@ -535,9 +550,11 @@ pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path) -> Re
     let used: std::collections::BTreeSet<String> =
         std::fs::read_to_string(&probe).unwrap_or_default().lines().filter(|l| !l.is_empty()).map(String::from).collect();
     let mut bytes = 0u64;
+    let draft_dir = story.build_dir().join("assets_draft");
     for u in &used {
-        let from = src.join(u);
-        anyhow::ensure!(from.exists(), "a frame uses {u}, missing from build/assets");
+        let full = src.join(u);
+        anyhow::ensure!(full.exists(), "a frame uses {u}, missing from build/assets");
+        let from = if scale < 1.0 && u.ends_with(".png") { draft_asset(&full, &draft_dir.join(u), scale)? } else { full };
         let to = dest.join(u);
         if std::fs::hard_link(&from, &to).is_err() {
             std::fs::copy(&from, &to)?;
@@ -547,4 +564,19 @@ pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path) -> Re
     let _ = std::fs::remove_dir_all(&empty);
     let _ = std::fs::remove_file(&probe);
     Ok((used.len(), bytes))
+}
+
+/// `cached`, a copy of the PNG `full` scaled by `scale`; rebuilt when missing, older than `full` or of another scale.
+fn draft_asset(full: &std::path::Path, cached: &std::path::Path, scale: f64) -> Result<std::path::PathBuf> {
+    let stamp = cached.with_extension("scale");
+    let fresh = |p: &std::path::Path| -> bool {
+        let (Ok(a), Ok(b)) = (std::fs::metadata(p).and_then(|m| m.modified()), std::fs::metadata(full).and_then(|m| m.modified())) else { return false };
+        a >= b
+    };
+    let same_scale = std::fs::read_to_string(&stamp).is_ok_and(|s| s.trim() == scale.to_string());
+    if !(fresh(cached) && same_scale) {
+        datavid::raster::downscale_png(full, cached, scale)?;
+        std::fs::write(&stamp, scale.to_string())?;
+    }
+    Ok(cached.to_path_buf())
 }

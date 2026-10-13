@@ -9,6 +9,9 @@ width = 1920
 height = 1080
 fps = 30
 max_duration = 60.0
+# drafts render at this height (1280×720); `--final` renders the design canvas above (1920×1080). Francisco's rule:
+# every render is a 720p draft until he signs off on the final cut.
+draft_height = 720
 
 [rules]
 min_font_px = 48

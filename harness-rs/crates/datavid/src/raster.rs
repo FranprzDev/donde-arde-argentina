@@ -224,3 +224,107 @@ pub fn data_uri(w: usize, h: usize, rgba: &[u8]) -> Result<String> {
     use base64::Engine;
     Ok(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png_bytes(w, h, rgba, true)?)))
 }
+
+/// Box-filter (area) resampling of an interleaved 8-bit image with `ch` channels to `nw`×`nh`. Colour is averaged
+/// premultiplied by alpha when there is an alpha channel (2 or 4 channels), so transparent texels do not darken edges.
+pub fn resample_area(px: &[u8], w: usize, h: usize, ch: usize, nw: usize, nh: usize) -> Vec<u8> {
+    let alpha = ch == 2 || ch == 4;
+    // premultiplied f32 copy
+    let mut src: Vec<f32> = px.iter().map(|&v| v as f32).collect();
+    if alpha {
+        for p in src.chunks_exact_mut(ch) {
+            let a = p[ch - 1] / 255.0;
+            for c in &mut p[..ch - 1] {
+                *c *= a;
+            }
+        }
+    }
+    // coverage weights of source cells [i, i+1) over the output cell [o*s, (o+1)*s)
+    let spans = |n: usize, m: usize| -> Vec<Vec<(usize, f32)>> {
+        let s = n as f64 / m as f64;
+        (0..m)
+            .map(|o| {
+                let (a, b) = (o as f64 * s, (o as f64 + 1.0) * s);
+                (a.floor() as usize..(b.ceil() as usize).min(n)).map(|i| (i, ((b.min(i as f64 + 1.0) - a.max(i as f64)) / s) as f32)).filter(|x| x.1 > 0.0).collect()
+            })
+            .collect()
+    };
+    let (sx, sy) = (spans(w, nw), spans(h, nh));
+    let mut tmp = vec![0f32; nw * h * ch];
+    for y in 0..h {
+        for (ox, cov) in sx.iter().enumerate() {
+            for &(ix, wgt) in cov {
+                for c in 0..ch {
+                    tmp[(y * nw + ox) * ch + c] += src[(y * w + ix) * ch + c] * wgt;
+                }
+            }
+        }
+    }
+    let mut out = vec![0u8; nw * nh * ch];
+    let mut acc = vec![0f32; ch];
+    for (oy, cov) in sy.iter().enumerate() {
+        for ox in 0..nw {
+            acc.iter_mut().for_each(|v| *v = 0.0);
+            for &(iy, wgt) in cov {
+                for c in 0..ch {
+                    acc[c] += tmp[(iy * nw + ox) * ch + c] * wgt;
+                }
+            }
+            if alpha {
+                let a = acc[ch - 1];
+                for c in 0..ch - 1 {
+                    acc[c] = if a > 0.0 { acc[c] * 255.0 / a } else { 0.0 };
+                }
+            }
+            for c in 0..ch {
+                out[(oy * nw + ox) * ch + c] = acc[c].round().clamp(0.0, 255.0) as u8;
+            }
+        }
+    }
+    out
+}
+
+/// Write a copy of the PNG `src` scaled by `k` (< 1) to `dst`, keeping its colour type. Used to pre-bake draft-sized
+/// rasters: a 720p draft draws every raster at 2/3 of its design size, so decoding the full-size file only costs memory.
+pub fn downscale_png(src: &Path, dst: &Path, k: f64) -> Result<()> {
+    let mut dec = png::Decoder::new(std::io::BufReader::new(std::fs::File::open(src)?));
+    dec.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut rd = dec.read_info()?;
+    let mut buf = vec![0u8; rd.output_buffer_size()];
+    let info = rd.next_frame(&mut buf)?;
+    let (w, h) = (info.width as usize, info.height as usize);
+    let ct = info.color_type;
+    let ch = ct.samples();
+    let (nw, nh) = (((w as f64 * k).round() as usize).max(1), ((h as f64 * k).round() as usize).max(1));
+    let px = resample_area(&buf[..w * h * ch], w, h, ch, nw, nh);
+    if let Some(p) = dst.parent() {
+        std::fs::create_dir_all(p)?;
+    }
+    let f = std::fs::File::create(dst)?;
+    let mut e = png::Encoder::new(std::io::BufWriter::new(f), nw as u32, nh as u32);
+    e.set_color(ct);
+    e.set_depth(png::BitDepth::Eight);
+    e.set_compression(png::Compression::Fast);
+    e.write_header()?.write_image_data(&px)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resample_area;
+
+    #[test]
+    fn area_resample_keeps_flat_colour_and_mean() {
+        let flat = vec![200u8; 9 * 6 * 3];
+        assert!(resample_area(&flat, 9, 6, 3, 6, 4).iter().all(|&v| v == 200));
+        // 2x2 -> 1x1 grey is the mean
+        assert_eq!(resample_area(&[0, 100, 50, 250], 2, 2, 1, 1, 1), vec![100]);
+    }
+
+    #[test]
+    fn area_resample_does_not_darken_transparent_edges() {
+        // one opaque red texel next to a fully transparent black one: the colour stays red, alpha halves
+        let px = [255, 0, 0, 255, 0, 0, 0, 0];
+        assert_eq!(resample_area(&px, 2, 1, 4, 1, 1), vec![255, 0, 0, 128]);
+    }
+}

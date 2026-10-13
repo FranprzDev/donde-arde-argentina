@@ -35,10 +35,47 @@ fn es() -> String {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VideoCfg {
+    /// design canvas (every coordinate and font size in the story is in these pixels); the final render uses it as is
     pub width: usize,
     pub height: usize,
     pub fps: usize,
     pub max_duration: f64,
+    /// output height of draft renders (the default until the author signs off on the final cut); 720 → 1280×720
+    #[serde(default = "d720")]
+    pub draft_height: usize,
+}
+
+fn d720() -> usize {
+    720
+}
+
+/// Output resolution of a render. Drafts are the default; the full design resolution needs an explicit `--final`
+/// (or `DATAVID_FINAL=1`), so nobody waits for a 1080p render before the cut is approved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Resolution {
+    Draft,
+    Final,
+}
+
+impl Resolution {
+    /// `--final` among the CLI args or `DATAVID_FINAL=1` in the environment selects [`Resolution::Final`]
+    pub fn from_args(args: &[String]) -> Self {
+        let env_final = std::env::var("DATAVID_FINAL").is_ok_and(|v| v == "1");
+        if env_final || args.iter().any(|a| a == "--final") { Self::Final } else { Self::Draft }
+    }
+    /// factor applied to the design canvas (fframes `--scale`)
+    pub fn scale(self, video: &VideoCfg) -> f64 {
+        match self {
+            Self::Final => 1.0,
+            Self::Draft => video.draft_height as f64 / video.height as f64,
+        }
+    }
+    /// output size in pixels, rounded to even numbers like fframes does (yuv420 needs even dimensions)
+    pub fn size(self, video: &VideoCfg) -> (usize, usize) {
+        let k = self.scale(video);
+        let even = |v: usize| ((v as f64 * k / 2.0).round() as usize * 2).max(2);
+        (even(video.width), even(video.height))
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
