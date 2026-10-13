@@ -39,8 +39,8 @@ Leé esto entero antes de tocar nada. Los comandos asumen que estás parado en `
   límite. Si no entra: sacar escenas o palabras, **nunca acelerar** el texto.
 - **Audio**: −14 LUFS integrados, true peak ≤ −1,5 dBTP (lo verifica el render).
 - **No commitear** mp4, wav, rásters crudos, `build/`, `data/raw/` (ya están en `.gitignore`).
-- **Privacidad**: nada de datos personales, tokens, clientes ni URLs privadas en el repo. Las historias que deban quedar
-  privadas viven **fuera** de este repo público.
+- **Privacidad**: nada de datos personales, tokens, clientes ni URLs privadas en el repo. Este repo es privado; si
+  el harness se publica aparte, las historias privadas (como `stories/incendios-argentina/`) no van.
 
 ## Mapa del código
 
