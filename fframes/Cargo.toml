@@ -1,0 +1,26 @@
+[package]
+name = "incendios-fframes"
+version = "0.1.0"
+edition = "2024"
+publish = false
+build = "build.rs"
+
+[dependencies]
+fframes = { version = "=1.2.1-rc.30", features = ["cli"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(not(windows))'.dependencies]
+fframes = { version = "=1.2.1-rc.30", features = ["cli", "h264", "libav-agree-gpl"] }
+
+[lib]
+name = "incendios_fframes"
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+name = "incendios-fframes"
+path = "src/main.rs"
+
+[profile.release]
+debug = false
