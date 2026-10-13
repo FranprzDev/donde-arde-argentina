@@ -1,0 +1,44 @@
+# «¿Dónde arde Argentina?» — story config for the datavid harness (on-screen text in Spanish).
+[story]
+title = "¿Dónde arde Argentina?"
+slug = "incendios-argentina"
+locale = "es"
+
+[video]
+width = 1920
+height = 1080
+fps = 30
+max_duration = 60.0
+
+[rules]
+min_font_px = 48
+max_words_per_beat = 12
+sec_per_word = 0.35
+base_hold = 1.0
+min_hold = 2.5
+
+[audio]
+lufs = -14.0
+true_peak = -1.5
+lufs_tolerance = 0.5
+seed = 23
+
+# Raw inputs. ${FIRES_RAW} is the folder with the heavy downloads (not committed): FIRMS CSVs and the MODIS monthly windows.
+[inputs]
+viirs_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data"
+modis_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/burn/umd"
+s2_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/fframes/raw/s2"
+flags_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/flags"
+natgeo = "../../../data/natgeo_v7.json"
+neighbours = "../../../data/geo_v2.json"
+provincias = "../../../data/provincias.geojson"
+departamentos = "../../../data/departamentos.geojson"
+causas_csv = "../../../data/incendios-cantidad-causas-provincia_1993-2019.csv"
+eeaoc_csv = "../../../data/eeaoc_ra370_cana_departamentos.csv"
+patagonia_facts = "../../../data/patagonia_facts.json"
+ne_land = "../../../data/ne_50m_land.geojson"
+fonts_dir = "media"
+# Python v10 outputs, used ONLY by `incendios verify` to check that the Rust prep reproduces the same numbers.
+reference_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/data"
+reference_viirs_stats = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/stats.json"
+reference_points = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/points.npz"
