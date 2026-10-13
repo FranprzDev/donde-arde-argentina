@@ -9,6 +9,7 @@
 //! incendios music           procedural score mastered to the story's LUFS -> build/assets/score.wav
 //! incendios build           all of the above, then render -> build/<slug>.mp4, then qa
 //! incendios qa [video.mp4]  QA frames + report (loudness of the MP4, duration, rules, min text size drawn)
+//! incendios render -o out.mp4  full render in chunks (INCENDIOS_CHUNKS, default 6), parts joined, score muxed
 //! incendios render|frame|strip|timeline|audio ...   the fframes CLI (see `incendios help`)
 //! ```
 mod assets;
@@ -109,8 +110,15 @@ fn run() -> Result<ExitCode> {
             assets::run(&story, &facts)?;
             music::run(&story, &facts)?;
             let out = story.build_dir().join(format!("{}.mp4", story.file.story.slug));
-            render::render_cli(&story, &facts, Some(vec![args[0].clone(), "render".into(), "-o".into(), out.display().to_string()]))?;
+            render::render_chunked(&story, &out, 6)?;
             qa::run(&story, &facts, &out).map(|_| ok)
+        }
+        Some("render") if !args[2..].iter().any(|a| !a.starts_with('-') && !args[2..].windows(2).any(|w| w[0] == "-o" && &w[1] == a)) && std::env::var_os("INCENDIOS_ASSETS").is_none() => {
+            // a full render (no range): chunked, so only the rasters each part uses are in memory
+            let (story, _) = load_story(&sp)?;
+            let out = args.windows(2).find(|w| w[0] == "-o" || w[0] == "--output").map(|w| PathBuf::from(&w[1])).unwrap_or_else(|| PathBuf::from("out.mp4"));
+            let n = std::env::var("INCENDIOS_CHUNKS").ok().and_then(|v| v.parse().ok()).unwrap_or(6);
+            render::render_chunked(&story, &out, n).map(|_| ok)
         }
         _ => {
             // everything else goes to the fframes CLI (render, frame, strip, timeline, audio, inspect, ...)

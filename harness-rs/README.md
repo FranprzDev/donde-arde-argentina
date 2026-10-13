@@ -71,6 +71,15 @@ The sources/credits card is exempt from the word cap but not from the hold rule 
   JPEG crops were produced offline by the original pipeline. The harness reads `.npz` natively; it does not yet fetch
   or reproject GeoTIFF/JP2 rasters.
 
+### Memory: chunked renders
+
+fframes decodes the whole media folder the first time a frame draws an image: ~1.9 GB of RGBA for `build/assets`
+(~3.5 GB RSS), which the OOM killer stopped in a 7 GB sandbox shared with other builds. A full `render -o out.mp4`
+(no range) therefore runs in chunks (`INCENDIOS_CHUNKS`, default 6), each in its own process: a probe pass records the
+`<image href>` of every frame without drawing, then the chunk renders with only those rasters (~1.5–1.8 GB RSS). The
+parts are joined without re-encoding and the score is muxed once with the `ffmpeg` CLI. A range (`render 10s..20s`)
+renders in one process as before.
+
 ## Sandbox notes
 
 `env.sh` points `RUSTUP_HOME`/`CARGO_HOME` at a persistent folder and `CARGO_TARGET_DIR` at a shared target. System

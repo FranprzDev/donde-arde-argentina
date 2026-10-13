@@ -406,7 +406,8 @@ impl Video for Incendios {
 
     fn audio(&self) -> AudioMap<'_> {
         // the score is synthesised and mastered by `incendios music` (build/assets/score.wav, −14 LUFS) and muxed as is
-        if self.st.build_dir().join("assets/score.wav").exists() {
+        // chunked renders mux the score once at the end (see `render_chunked`)
+        if std::env::var_os("INCENDIOS_NO_AUDIO").is_none() && self.st.build_dir().join("assets/score.wav").exists() {
             use fframes::{AudioTimestamp::*, AudioTrack};
             AudioMap::from([AudioTrack::new("score.wav", Second(0.0)..Eof)])
         } else {
@@ -417,6 +418,22 @@ impl Video for Incendios {
     fn render_frame<'a>(&'a self, mut frame: Frame, ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
         let t = frame.global_index as f64 / 30.0;
         let body = self.render_at(t, &mut frame, ctx);
+        if let Some(p) = std::env::var_os("INCENDIOS_PROBE") {
+            // probe pass: record the rasters this frame uses and draw nothing (nothing gets decoded)
+            let mut used = String::new();
+            for part in body.split("<image href=\"").skip(1) {
+                if let Some(end) = part.find('"') {
+                    used.push_str(&part[..end]);
+                    used.push('\n');
+                }
+            }
+            if !used.is_empty() {
+                use std::io::Write as _;
+                let mut f = std::fs::OpenOptions::new().create(true).append(true).open(p).expect("probe file");
+                f.write_all(used.as_bytes()).expect("probe write");
+            }
+            return Svgr::from(r#"<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"/>"#.to_string());
+        }
         Svgr::from(format!(r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">{body}</svg>"#))
     }
 }
@@ -431,7 +448,9 @@ pub fn render_cli(story: &Story, facts: &Facts, args: Option<Vec<String>>) -> Re
     }
     let video = Incendios::new(story.clone(), facts.clone())?;
     let fonts = fframes::MediaDirectory::read_folder(story.dir.join("media")).context("media/ (fonts)")?;
-    let assets = fframes::MediaDirectory::read_folder(story.build_dir().join("assets")).context("build/assets (run `incendios assets`)")?;
+    // INCENDIOS_ASSETS: a subset of build/assets (one chunk of a chunked render)
+    let adir = std::env::var_os("INCENDIOS_ASSETS").map(std::path::PathBuf::from).unwrap_or_else(|| story.build_dir().join("assets"));
+    let assets = fframes::MediaDirectory::read_folder(&adir).context("build/assets (run `incendios assets`)")?;
     let fonts_p = fonts.process_media_source().map_err(|e| anyhow::anyhow!("{e:?}"))?;
     let assets_p = assets.process_media_source().map_err(|e| anyhow::anyhow!("{e:?}"))?;
     let media = fframes::CombinedMediaProvider::from([&fonts_p as &dyn fframes::MediaProvider, &assets_p as &dyn fframes::MediaProvider]);
@@ -444,4 +463,71 @@ pub fn render_cli(story: &Story, facts: &Facts, args: Option<Vec<String>>) -> Re
         },
     )
     .run())
+}
+
+/// Full render in chunks, each in its own process with only the rasters it uses.
+///
+/// fframes decodes the whole media folder once an image is first drawn (~1.9 GB of RGBA for build/assets, ~3.5 GB RSS),
+/// which the OOM killer stopped in a 7 GB sandbox shared with other builds. Each chunk first runs a probe pass
+/// (`INCENDIOS_PROBE`: record every `<image href>`, draw nothing), then renders with `INCENDIOS_ASSETS` pointing at a
+/// folder holding just those files. The parts are joined without re-encoding and the score is muxed once (ffmpeg CLI).
+pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Result<()> {
+    let exe = std::env::current_exe()?;
+    let frames = story.frames();
+    let work = story.build_dir().join("chunks");
+    let _ = std::fs::remove_dir_all(&work);
+    std::fs::create_dir_all(&work)?;
+    let src = story.build_dir().join("assets");
+    let empty = work.join("empty");
+    std::fs::create_dir_all(&empty)?;
+    let n = chunks.max(1);
+    let mut list = String::new();
+    for k in 0..n {
+        let (a, b) = (frames * k / n, frames * (k + 1) / n);
+        let range = format!("{a}f..{b}f");
+        let probe = work.join(format!("probe_{k}.txt"));
+        let st = std::process::Command::new(&exe)
+            .args(["render", &range, "--scale", "0.125", "-o"])
+            .arg(work.join(format!("probe_{k}.mp4")))
+            .env("INCENDIOS_PROBE", &probe)
+            .env("INCENDIOS_ASSETS", &empty)
+            .env("INCENDIOS_NO_AUDIO", "1")
+            .status()?;
+        anyhow::ensure!(st.success(), "probe of chunk {k} ({range}) failed");
+        let used: std::collections::BTreeSet<String> =
+            std::fs::read_to_string(&probe).unwrap_or_default().lines().filter(|l| !l.is_empty()).map(String::from).collect();
+        let dir = work.join(format!("assets_{k}"));
+        std::fs::create_dir_all(&dir)?;
+        let mut bytes = 0u64;
+        for u in &used {
+            let from = src.join(u);
+            anyhow::ensure!(from.exists(), "chunk {k}: frame uses {u}, missing from build/assets");
+            let to = dir.join(u);
+            if std::fs::hard_link(&from, &to).is_err() {
+                std::fs::copy(&from, &to)?;
+            }
+            bytes += std::fs::metadata(&from)?.len();
+        }
+        eprintln!("chunk {}/{n}: frames {range}, {} rasters ({:.1} MB on disk)", k + 1, used.len(), bytes as f64 / 1e6);
+        let part = work.join(format!("part_{k:02}.mp4"));
+        let st = std::process::Command::new(&exe).args(["render", &range, "-o"]).arg(&part).env("INCENDIOS_ASSETS", &dir).env("INCENDIOS_NO_AUDIO", "1").status()?;
+        anyhow::ensure!(st.success(), "render of chunk {k} ({range}) failed: {st}");
+        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::remove_file(work.join(format!("probe_{k}.mp4")));
+        list.push_str(&format!("file '{}'\n", part.display()));
+    }
+    std::fs::write(work.join("parts.txt"), &list)?;
+    let secs = frames as f64 / 30.0;
+    let st = std::process::Command::new("ffmpeg")
+        .args(["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i"])
+        .arg(work.join("parts.txt"))
+        .arg("-i")
+        .arg(src.join("score.wav"))
+        .args(["-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-t", &format!("{secs:.4}"), "-movflags", "+faststart"])
+        .arg(out)
+        .status()
+        .context("ffmpeg (concat + mux)")?;
+    anyhow::ensure!(st.success(), "ffmpeg concat/mux failed");
+    eprintln!("render: {} chunks -> {}", n, out.display());
+    Ok(())
 }
