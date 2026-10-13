@@ -1,0 +1,19 @@
+{
+ "ids": [
+  "S2B_MSIL2A_20250923T141709_R010_T20JKR_20250923T194254",
+  "S2B_MSIL2A_20250923T141709_R010_T20JLR_20250923T194254"
+ ],
+ "date": "2025-09-23T14:17:09.024000Z",
+ "cloud": {
+  "S2B_MSIL2A_20250923T141709_R010_T20JLR_20250923T194254": 0.171692,
+  "S2B_MSIL2A_20250923T141709_R010_T20JKR_20250923T194254": 0.019635
+ },
+ "bbox": [
+  -65.04,
+  -26.875,
+  -64.86,
+  -26.715
+ ],
+ "source": "Copernicus Sentinel-2 L2A (ESA), via Microsoft Planetary Computer",
+ "license": "Copernicus open data (free, full and open; attribution: 'Contains modified Copernicus Sentinel data <year>')"
+}

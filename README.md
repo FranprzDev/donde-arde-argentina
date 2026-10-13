@@ -11,7 +11,7 @@ Todo lo que aparece en el video se genera con código a partir de datos abiertos
 | `pipeline/` | Scripts de descarga, procesamiento, render de cuadros, música y armado final |
 | `data/` | Datos procesados chicos (CSV, JSON, GeoJSON) y estadísticas que lee el render |
 | `docs/` | Guion con tiempos (`script.md`), fuentes y verificación de cada número (`sources.md`), descripción metodológica |
-| `assets_meta/` | Licencia, autor y URL de cada foto y titular usado |
+| `assets_meta/` | Metadatos de cada imagen satelital (producto, fecha, nubosidad, caja) y créditos de versiones anteriores |
 | `fonts/` | Tipografías abiertas (OFL) |
 
 Los datos crudos pesados (archivo FIRMS, rásters MODIS, Sentinel-2) no están en el repo: se bajan con los scripts.
@@ -24,7 +24,7 @@ Los datos crudos pesados (archivo FIRMS, rásters MODIS, Sentinel-2) no están e
 - **Límites:** INDEC (provincias, radios del Censo 2022) e IGN.
 - **Caña de azúcar en Tucumán:** EEAOC (departamentos cañeros).
 - **Imágenes satelitales:** Copernicus Sentinel-2.
-- Fotos, titulares de prensa y cifras puntuales: ver `docs/sources.md` y `assets_meta/`.
+- v9 no usa fotos ni titulares de prensa: todo ocurre sobre un único mapa, con zooms a imágenes Sentinel-2. Cifras puntuales: ver `docs/sources.md` y `assets_meta/v9/`.
 
 ## Cómo se genera
 
@@ -35,13 +35,14 @@ pipeline/prep_burn.py        # área quemada por provincia, cicatrices
 pipeline/causas.py           # causas (Min. Ambiente)
 pipeline/prep_tucuman.py     # focos en la zona cañera durante la zafra
 pipeline/prep_v2.py, prep_v4.py, prep_v7.py   # estadísticas y ranking provincial
-pipeline/v8/render_v8.py # (v8, versión actual) imprime todos los números que salen en pantalla
-pipeline/v8/build_v8.sh      # render de cuadros en paralelo + música + armado
+pipeline/v9/render_v9.py --nums   # (v9, versión actual) imprime todos los números que salen en pantalla
+pipeline/v9/s2_date.py            # recortes Copernicus Sentinel-2 de una fecha (Burruyacú 23/09/2025, Delta 23/09/2020)
+pipeline/v9/build_v9.sh           # render de cuadros en paralelo + música + armado
 ```
 
 Requisitos: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
 
-Ningún número está tipeado a mano en el render: todos se leen de los JSON de `data/`, y `render_v7.py` tiene un `assert` por cada redondeo verbal («casi», «más de») y por cada valor del ranking.
+Ningún número está tipeado a mano en el render: todos se leen de los JSON de `data/`, y `render_v9.py` tiene un `assert` por cada redondeo verbal («casi», «más de») y por cada valor del ranking.
 
 ## Uso de IA
 
