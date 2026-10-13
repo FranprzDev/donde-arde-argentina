@@ -13,6 +13,7 @@ Todo lo que aparece en el video se genera con código a partir de datos abiertos
 | `docs/` | Guion con tiempos (`script.md`), fuentes y verificación de cada número (`sources.md`), descripción metodológica |
 | `assets_meta/` | Metadatos de cada imagen satelital (producto, fecha, nubosidad, caja) y créditos de versiones anteriores |
 | `fonts/` | Tipografías abiertas (OFL) |
+| `harness/` | Harness genérico para videos de historias con datos (`story.yaml` + datos → video), con el ejemplo `sismos-argentina` y este video portado en `stories/incendios-argentina/` |
 
 Los datos crudos pesados (archivo FIRMS, rásters MODIS, Sentinel-2) no están en el repo: se bajan con los scripts.
 
@@ -43,6 +44,31 @@ pipeline/v9/build_v9.sh           # render de cuadros en paralelo + música + ar
 Requisitos: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
 
 Ningún número está tipeado a mano en el render: todos se leen de los JSON de `data/`, y `render_v9.py` tiene un `assert` por cada redondeo verbal («casi», «más de») y por cada valor del ranking.
+
+## Harness (`harness/`)
+
+`harness/` es la versión genérica de este pipeline: un paquete de Python que arma un video corto (≤ 60 s) a partir de un
+`story.yaml` (las escenas y sus textos) y un `facts.py` (cada número que sale en pantalla, con un `assert` por cada
+redondeo verbal). Las reglas de lectura (texto ≥ 48 px, palabras por escena, tiempo mínimo en pantalla, duración total),
+la música procedural y la normalización a −14 LUFS están en código: si algo no cumple, el build falla.
+
+```bash
+cd harness
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt                        # Python 3.10+ y ffmpeg en el PATH
+
+make test                                              # pytest: reglas + render del ejemplo chico
+make check STORY=stories/sismos-argentina/story.yaml   # valida YAML, calcula facts, chequea reglas
+make video STORY=stories/sismos-argentina/story.yaml PREVIEW=1   # render rápido a media resolución
+python -m harness new "Mi historia"                    # historia nueva desde la plantilla
+```
+
+Sin `make`: `python -m harness check|qa|render|still <story>`. También hay `Dockerfile`.
+
+- `harness/stories/sismos-argentina/`: ejemplo chico (USGS, datos en el repo, sin red, ~1 min).
+- `harness/stories/incendios-argentina/`: este video (v9) portado al harness. Los datos pesados no están en el repo;
+  su `README.md` dice qué script del `pipeline/` genera cada uno.
+- Documentación: `harness/README.md`, `harness/AGENTS.md` (flujo y reglas para agentes de código), `harness/docs/`.
 
 ## Uso de IA
 

@@ -1,0 +1,58 @@
+# __NAME__ — starter story created by `python -m harness new`. Workflow: AGENTS.md. Beat reference: docs/beats.md
+title: "__NAME__"
+slug: __SLUG__
+locale: es
+
+video: {width: 1920, height: 1080, fps: 30, preview_fps: 15, max_duration: 60}
+
+rules: {min_font_px: 48, max_words_per_beat: 12, sec_per_word: 0.35, base_hold: 1.0, min_hold: 2.5}
+
+map:
+  regions: {path: data/provincias_ign.geojson, id: code, name: name}
+  neighbours: data/contexto_tierra.geojson
+  ref_lat: -38
+  home_camera: {center: [-64.2, -38.6], zoom: 26.5, anchor: [1290, 560]}
+
+data: {}          # add your datasets here (kind: points | raster | image | table | json)
+
+facts:
+  script: facts.py
+  asserts:
+    - "top_n == 3"
+    - "ranking[0]['value'] > ranking[1]['value']"
+  literals: {}
+
+music: {seed: 1}
+
+beats:
+  - id: intro
+    type: globe_intro
+    title: ["UNA PREGUNTA", "CON DATOS"]
+
+  - id: ranking
+    type: ranking
+    rows: ranking
+    top: 3
+    header: "LAS {top_n} MÁS GRANDES"
+    camera: {center: [-64.2, -38.6], zoom: 30, anchor: [1430, 548]}
+
+  - id: dato
+    type: big_number
+    camera: {fit: ["{first_code}"], size: [700, 760], anchor: [1420, 540]}
+    head: "{first_name}"
+    number: "{first_km2|int}"
+    unit: "KM²"
+    subline: "LA MÁS EXTENSA"
+    highlight: [{regions: ["{first_code}"], color: accent2}]
+
+  - id: cierre
+    type: closing
+    camera: home
+    lines: [{text: "CADA NÚMERO,"}, {text: "CON SU FUENTE.", color: accent}]
+
+  - id: fuentes
+    type: sources
+    lines:
+      - "Límites: IGN, vía Georef (datos.gob.ar, CC BY 4.0)."
+      - "Tierra de contexto: Natural Earth (dominio público)."
+      - "Mapas, animación y música: hechos con código."

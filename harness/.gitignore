@@ -1,0 +1,19 @@
+# renders, audio, caches
+build/
+*.mp4
+*.mov
+*.wav
+*.m4a
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.cache_*.geojson
+# heavy / raw data (fetch with each story's prepare.py)
+data/raw/
+*.tif
+*.tiff
+*.nc
+*.hdf
+*.npz
+*.npy
