@@ -343,7 +343,7 @@ impl Incendios {
             let x = tl_x((k * 12) as f64);
             let _ = write!(o.s, r#"<path d="M{x:.1} {yb}L{x:.1} {}" stroke="rgb(150,146,140)" stroke-opacity="{}" stroke-width="2"/>"#, yb + if y % 4 == 0 { 12.0 } else { 6.0 }, op(170.0 / 255.0 * a));
             if k % 4 == 0 {
-                o.text(x + 4.0, yb + 52.0, &y.to_string(), MONO7, 48.0, MU, a, 1.0, 0.0);
+                o.text(x + 4.0, yb + 48.0, &y.to_string(), MONO7, 48.0, MU, a, 1.0, 0.0);
             }
         }
         let n = mn as usize;

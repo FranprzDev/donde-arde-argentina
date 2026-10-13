@@ -85,6 +85,8 @@ pub struct AssetMeta {
     pub sun_r: f64,
     pub sun_half: f64,
     pub s2: HashMap<String, [f64; 4]>,
+    /// per stop: video frame -> lon/lat box of its hotspot-replay raster
+    pub ev_frames: [HashMap<usize, [f64; 4]>; 3],
 }
 
 fn b4(v: &Value) -> [f64; 4] {
@@ -109,6 +111,7 @@ impl AssetMeta {
             sun_r: a["sun"]["r"].as_f64().unwrap(),
             sun_half: a["sun"]["half"].as_f64().unwrap(),
             s2: a["s2"].as_object().unwrap().iter().map(|(k, v)| (k.clone(), b4(v))).collect(),
+            ev_frames: [0, 1, 2].map(|i| a["ev_frames"][i].as_object().map(|m| m.iter().map(|(k, v)| (k.parse().unwrap(), b4(v))).collect()).unwrap_or_default()),
         })
     }
 }

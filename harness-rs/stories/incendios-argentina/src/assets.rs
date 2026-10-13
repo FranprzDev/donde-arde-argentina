@@ -291,8 +291,89 @@ pub fn run(story: &Story, _facts: &Facts) -> Result<()> {
         let meta = read_json(&s2.join(format!("{name}.json")))?;
         s2m.insert(name.into(), json!(crate::prep::s2_bbox(&meta)));
     }
-    let meta = json!({"grid_bbox": gbbox, "fresh": fresh, "ember_q": ember_q, "scar_levels": scar_levels, "events": events, "sun": {"r": 400.0, "half": n as f64 / 2.0}, "s2": s2m});
+    // ---- the hotspot replay of each stop, one light raster per video frame
+    let geo = read_json(&src.join("geometry.json"))?;
+    let codes: Vec<String> = geo["codes"].as_array().unwrap().iter().map(|c| c.as_str().unwrap().to_string()).collect();
+    let tl = crate::timeline::Tl::new(story, [crate::prep::s2_bbox(&read_json(&s2.join("tuc_2025-09-23.json"))?), crate::prep::s2_bbox(&read_json(&s2.join("delta_2020-09-23.json"))?)]);
+    let ev = crate::timeline::events(&tl, &pts, &codes);
+    let mut ev_frames = vec![];
+    for i in 0..3 {
+        let (s0, s1) = tl.stops[i];
+        let c = crate::timeline::STOPCAM[i];
+        let mut m = serde_json::Map::new();
+        let (f0, f1) = (((s0 - 0.3) * 30.0).ceil() as usize, ((s1 + 0.5) * 30.0).ceil() as usize);
+        let rendered: Vec<_> = {
+            use rayon::prelude::*;
+            (f0..f1).into_par_iter().map(|f| (f, event_raster(&ev, &tl, &l, i, f as f64 / 30.0, &c))).collect()
+        };
+        for (f, r) in rendered {
+            if let Some((rgba, w, h, x0, y0)) = r {
+                write_png(&out.join(format!("ev{i}_{f:04}.png")), w, h, &rgba)?;
+                // pixel box -> lon/lat under the stop camera
+                let lon = |x: f64| c[0] + (x - c[3]) / (c[2] * COS);
+                let lat = |y: f64| c[1] - (y - c[4]) / c[2];
+                m.insert(f.to_string(), json!([lon(x0), lat(y0 + h as f64), lon(x0 + w as f64), lat(y0)]));
+            }
+        }
+        ev_frames.push(Value::Object(m));
+    }
+    eprintln!("assets: stop replays {:.1}s", t0.elapsed().as_secs_f64());
+    let meta = json!({"ev_frames": ev_frames, "grid_bbox": gbbox, "fresh": fresh, "ember_q": ember_q, "scar_levels": scar_levels, "events": events, "sun": {"r": 400.0, "half": n as f64 / 2.0}, "s2": s2m});
     crate::prep::write_json(&story.build_dir().join("assets.json"), &meta)?;
     eprintln!("assets: done in {:.1}s -> {}", t0.elapsed().as_secs_f64(), out.display());
     Ok(())
+}
+
+/// The v10 hotspot replay of stop `i` at time t under camera c: every hotspot that has lit up glows (fresh ones brighter),
+/// splatted on screen pixels, blurred by the zoom, coloured with the fire ramp, plus a half-resolution bloom.
+/// Returns (RGBA light, w, h, x0, y0) of the cropped raster.
+pub fn event_raster(ev: &crate::timeline::Events, tl: &crate::timeline::Tl, l: &[[f32; 3]], i: usize, t: f64, c: &crate::timeline::Cam) -> Option<(Vec<u8>, usize, usize, f64, f64)> {
+    use datavid::raster::{resize, shrink};
+    let (w_, h_) = (1920.0, 1080.0);
+    let (_, s1) = tl.stops[i];
+    let fade = 1.0 - ((t - s1 + 0.2) / 0.5).clamp(0.0, 1.0);
+    if fade <= 0.0 {
+        return None;
+    }
+    let mut hits: Vec<(f64, f64, f32)> = vec![];
+    for (p, tt) in ev.pts[i].iter().zip(ev.times[i].iter()) {
+        if *tt <= t {
+            let (x, y) = crate::timeline::proj(p.0 as f64, p.1 as f64, c);
+            if (-60.0..w_ + 60.0).contains(&x) && (-60.0..h_ + 60.0).contains(&y) {
+                hits.push((x, y, ((0.25 + 1.6 * (-(t - tt) / 0.35).exp()) * fade) as f32));
+            }
+        }
+    }
+    if hits.is_empty() {
+        return None;
+    }
+    let pad = 90.0;
+    let bx0 = (hits.iter().map(|h| h.0).fold(f64::MAX, f64::min) - pad).floor();
+    let by0 = (hits.iter().map(|h| h.1).fold(f64::MAX, f64::min) - pad).floor();
+    let bx1 = (hits.iter().map(|h| h.0).fold(f64::MIN, f64::max) + pad).ceil();
+    let by1 = (hits.iter().map(|h| h.1).fold(f64::MIN, f64::max) + pad).ceil();
+    let (w, h) = (((bx1 - bx0) as usize / 2 * 2).max(2), ((by1 - by0) as usize / 2 * 2).max(2));
+    let mut img = Img::new(w, h);
+    for (x, y, v) in &hits {
+        let (xi, yi) = ((x - bx0).round() as isize, (y - by0).round() as isize);
+        if xi >= 0 && yi >= 0 && (xi as usize) < w && (yi as usize) < h {
+            img.px[yi as usize * w + xi as usize] += v;
+        }
+    }
+    let fire = if i == 2 {
+        blur(&img, 2.2).map(|v| v * 9.0)
+    } else {
+        let k = c[2] / 30.0;
+        let base = if k > 1.15 { blur(&img, (0.55 * k.powf(0.8)).min(6.0)).map(|v| v * (k.powf(1.25) * 0.55) as f32) } else { img };
+        base.map(|v| v * if i == 0 { 0.5 } else { 0.6 })
+    };
+    let v = fire.map(|x| 1.0 - (-x * 0.8).exp());
+    let f = apply_lut(l, &v);
+    let mut bloom: Vec<Img> = Vec::with_capacity(3);
+    for ch in 0..3 {
+        let plane = Img::from(w, h, f.iter().map(|p| p[ch]).collect());
+        bloom.push(resize(&blur(&shrink(&plane, 2), 6.0).map(|x| x * 0.8), w, h));
+    }
+    let rgb: Vec<[f32; 3]> = (0..w * h).map(|k| [f[k][0] + bloom[0].px[k], f[k][1] + bloom[1].px[k], f[k][2] + bloom[2].px[k]]).collect();
+    Some((light_rgba(&rgb), w, h, bx0, by0))
 }

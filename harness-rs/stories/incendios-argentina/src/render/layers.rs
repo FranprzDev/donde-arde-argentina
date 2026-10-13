@@ -1,6 +1,5 @@
 //! The map and overlay layers of each beat (ported from render_v10.py).
 use super::*;
-use datavid::raster::{Img, blur, data_uri, light_rgba, resize, shrink};
 use datavid::svg::blur_id;
 
 const LIGHT: [f64; 3] = [-0.5631544, 0.2867004, 0.8088421]; // normalised (-0.55, 0.28, 0.79): the sun's direction
@@ -453,15 +452,16 @@ impl Incendios {
             return;
         }
         let (lon, lat) = &self.day[i];
-        let mut core = String::new();
+        let (mut core, mut glow) = (String::new(), String::new());
         for (j, (x, y)) in lon.iter().zip(lat.iter()).enumerate() {
             let kk = clamp((t - z1 - 0.2 - 0.025 * j as f64) / 0.2) * k;
             if kk > 0.0 {
                 let (px, py) = proj(*x, *y, c);
                 let _ = write!(core, r#"<circle cx="{px:.1}" cy="{py:.1}" r="7" opacity="{}"/>"#, op(kk));
+                let _ = write!(glow, r#"<circle cx="{px:.1}" cy="{py:.1}" r="16" opacity="{}"/>"#, op(kk));
             }
         }
-        let _ = write!(s, r#"<g style="mix-blend-mode:screen"><g fill="rgb(255,110,30)" filter="url(#b6)">{core}{core}</g><g fill="rgb(255,236,170)">{core}</g></g>"#);
+        let _ = write!(s, r#"<g style="mix-blend-mode:screen"><g fill="rgb(255,110,30)" filter="url(#b8)">{glow}{glow}</g><g fill="rgb(255,236,170)">{core}</g></g>"#);
     }
     pub(super) fn s2v_frame(&self, o: &mut Svg, t: f64, c: &Cam, i: usize) {
         let w2 = self.s2v_w(t, i);
@@ -491,62 +491,12 @@ impl Incendios {
         }
     }
 
-    /// the hotspots replayed inside each stop, drawn as a light raster (data URI) like the v10 splat + bloom
+    /// the hotspots replayed inside each stop: one precomputed light raster per frame (`incendios assets`), placed in
+    /// lon/lat so the camera's own small moves (shake, the zoom-out into the satellite crop) still apply
     pub(super) fn event_layer(&self, s: &mut String, t: f64, c: &Cam, i: usize) {
-        let (s0, s1) = self.tl.stops[i];
-        if !(s0 - 0.3 <= t && t < s1 + 0.5) {
-            return;
-        }
-        let fade = 1.0 - clamp((t - s1 + 0.2) / 0.5);
-        if fade <= 0.0 {
-            return;
-        }
-        let mut hits: Vec<(f64, f64, f32)> = vec![];
-        for (p, tt) in self.ev.pts[i].iter().zip(self.ev.times[i].iter()) {
-            if *tt <= t {
-                let (x, y) = proj(p.0 as f64, p.1 as f64, c);
-                if (-60.0..W + 60.0).contains(&x) && (-60.0..H + 60.0).contains(&y) {
-                    hits.push((x, y, ((0.25 + 1.6 * (-(t - tt) / 0.35).exp()) * fade) as f32));
-                }
-            }
-        }
-        if hits.is_empty() {
-            return;
-        }
-        let pad = 90.0;
-        let bx0 = (hits.iter().map(|h| h.0).fold(f64::MAX, f64::min) - pad).max(0.0).floor();
-        let by0 = (hits.iter().map(|h| h.1).fold(f64::MAX, f64::min) - pad).max(0.0).floor();
-        let bx1 = (hits.iter().map(|h| h.0).fold(f64::MIN, f64::max) + pad).min(W).ceil();
-        let by1 = (hits.iter().map(|h| h.1).fold(f64::MIN, f64::max) + pad).min(H).ceil();
-        if bx1 <= bx0 + 2.0 || by1 <= by0 + 2.0 {
-            return;
-        }
-        let (w, h) = (((bx1 - bx0) as usize / 2 * 2).max(2), ((by1 - by0) as usize / 2 * 2).max(2));
-        let mut l = Img::new(w, h);
-        for (x, y, v) in &hits {
-            let (xi, yi) = ((x - bx0).round() as isize, (y - by0).round() as isize);
-            if xi >= 0 && yi >= 0 && (xi as usize) < w && (yi as usize) < h {
-                l.px[yi as usize * w + xi as usize] += v;
-            }
-        }
-        let fire = if i == 2 {
-            blur(&l, 2.2).map(|v| v * 9.0)
-        } else {
-            let k = c[2] / 30.0;
-            let base = if k > 1.15 { blur(&l, (0.55 * k.powf(0.8)).min(6.0)).map(|v| v * (k.powf(1.25) * 0.55) as f32) } else { l };
-            base.map(|v| v * if i == 0 { 0.5 } else { 0.6 })
-        };
-        let v = fire.map(|x| 1.0 - (-x * 0.8).exp());
-        let f = crate::assets::apply_lut(&self.lut, &v);
-        let mut bloom: Vec<Img> = Vec::with_capacity(3);
-        for ch in 0..3 {
-            let plane = Img::from(w, h, f.iter().map(|p| p[ch]).collect());
-            let hs = shrink(&plane, 2);
-            bloom.push(resize(&blur(&hs, 6.0).map(|x| x * 0.8), w, h));
-        }
-        let rgb: Vec<[f32; 3]> = (0..w * h).map(|k| [f[k][0] + bloom[0].px[k], f[k][1] + bloom[1].px[k], f[k][2] + bloom[2].px[k]]).collect();
-        if let Ok(uri) = data_uri(w, h, &light_rgba(&rgb)) {
-            let _ = write!(s, r#"<image href="{uri}" x="{bx0}" y="{by0}" width="{w}" height="{h}" style="mix-blend-mode:screen"/>"#);
+        let f = (t * 30.0).round() as usize;
+        if let Some(bb) = self.a.ev_frames[i].get(&f) {
+            s.push_str(&self.geo_image(&format!("ev{i}_{f:04}.png"), *bb, c, 1.0, "screen", false));
         }
     }
 
