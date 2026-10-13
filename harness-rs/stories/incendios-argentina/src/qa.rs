@@ -3,7 +3,7 @@
 //! * loudness of the MP4's own audio (decoded by the ffmpeg CLI, measured in Rust with EBU R128): integrated LUFS within
 //!   tolerance of the target and true peak ≤ the ceiling;
 //! * readability rules (datavid::rules) and fact asserts (build/asserts.txt);
-//! * smallest font size actually drawn, read from the final SVG of a frame every second (`incendios svg <t>`);
+//! * smallest font size actually drawn, read from the SVG the story wrote for a frame every 2 s and each QA frame, scale() included;
 //! * QA frames at the key beats (`incendios frame`).
 use anyhow::{Context, Result, bail};
 use datavid::qa::Report;
@@ -12,10 +12,6 @@ use serde_json::{Value, json};
 use std::path::Path;
 use std::process::Command;
 
-fn self_cmd(args: &[&str]) -> Result<std::process::Output> {
-    let exe = std::env::current_exe()?;
-    Ok(Command::new(exe).args(args).output()?)
-}
 
 pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
     let qa_dir = story.build_dir().join("qa");
@@ -87,27 +83,49 @@ pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
     let tmp = qa_dir.join("raw");
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp)?;
-    let out = self_cmd(&["frame", &times.join(","), "-o", &tmp.display().to_string(), "--svg"])?;
+    // the SVG fframes prints after conversion has the text laid out as paths, so the frames also dump the SVG the
+    // story wrote (INCENDIOS_DUMP_SVG) and the sizes are read from its <text> elements, with any scale() applied
+    let src_svg = qa_dir.join("svg");
+    let _ = std::fs::remove_dir_all(&src_svg);
+    std::fs::create_dir_all(&src_svg)?;
+    // only the rasters these frames use (fframes decodes the whole media folder; see render_chunked)
+    let tlist = times.join(",");
+    let sub = qa_dir.join("assets");
+    let probe_out = qa_dir.join("probe");
+    std::fs::create_dir_all(&probe_out)?;
+    crate::render::subset_assets(story, &["frame", &tlist, "--scale", "0.125", "-o", &probe_out.display().to_string()], &sub)?;
+    let _ = std::fs::remove_dir_all(&probe_out);
+    let exe = std::env::current_exe()?;
+    let out = Command::new(exe).args(["frame", &tlist, "-o", &tmp.display().to_string()]).env("INCENDIOS_DUMP_SVG", &src_svg).env("INCENDIOS_ASSETS", &sub).env("INCENDIOS_NO_AUDIO", "1").output()?;
+    let _ = std::fs::remove_dir_all(&sub);
     if !out.status.success() {
         bail!("fframes frame failed: {}", String::from_utf8_lossy(&out.stderr));
     }
-    let (mut min_font, mut at) = (f64::MAX, String::new());
-    for e in std::fs::read_dir(&tmp)?.filter_map(|e| e.ok()) {
+    let (mut min_font, mut at, mut n_text, mut n_svg) = (f64::MAX, String::new(), 0usize, 0usize);
+    for e in std::fs::read_dir(&src_svg)?.filter_map(|e| e.ok()) {
         let p = e.path();
         if p.extension().is_some_and(|x| x == "svg") {
+            n_svg += 1;
             let s = std::fs::read_to_string(&p)?;
-            for part in s.split("font-size=\"").skip(1) {
-                if let Some(v) = part.split('"').next().and_then(|v| v.trim_end_matches("px").parse::<f64>().ok()) {
-                    if v < min_font {
-                        min_font = v;
-                        at = p.file_stem().unwrap().to_string_lossy().to_string();
-                    }
+            for el in s.split("<text ").skip(1) {
+                let el = &el[..el.find('>').unwrap_or(el.len())];
+                let attr = |k: &str| el.split(&format!("{k}=\"")).nth(1).and_then(|v| v.split('"').next());
+                let Some(size) = attr("font-size").and_then(|v| v.trim_end_matches("px").parse::<f64>().ok()) else { continue };
+                let scale = el.split("scale(").nth(1).and_then(|v| v.split(')').next()).and_then(|v| v.trim().parse::<f64>().ok()).unwrap_or(1.0);
+                let v = size * scale;
+                n_text += 1;
+                if v < min_font {
+                    min_font = v;
+                    let t = p.file_stem().unwrap().to_string_lossy().trim_start_matches('f').parse::<f64>().map(|f| format!("{:.2} s", f / 30.0)).unwrap_or_default();
+                    let txt: String = s.split(&format!("<text {el}>")).nth(1).and_then(|r| r.split("</text>").next()).unwrap_or("").chars().take(40).collect();
+                    at = format!("{t} («{txt}», {size} px × {scale})");
                 }
             }
         }
     }
+    anyhow::ensure!(n_text > 0, "QA read no <text> in {n_svg} dumped SVGs: the size check would pass vacuously");
     let minf = story.file.rules.min_font_px;
-    r.check("smallest text drawn", min_font >= minf, &format!("{min_font} px at {at} (min {minf} px; final SVG of {} frames)", times.len()));
+    r.check("smallest text drawn", min_font >= minf, &format!("{min_font:.1} px at {at} (min {minf} px; {n_text} texts in {n_svg} frames, a frame every 2 s plus the QA frames)"));
     let mut list = String::new();
     for (name, t) in shots.iter() {
         let src = tmp.join(format!("{}.png", tok(*t)));

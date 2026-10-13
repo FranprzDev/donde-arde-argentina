@@ -418,6 +418,10 @@ impl Video for Incendios {
     fn render_frame<'a>(&'a self, mut frame: Frame, ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
         let t = frame.global_index as f64 / 30.0;
         let body = self.render_at(t, &mut frame, ctx);
+        if let Some(d) = std::env::var_os("INCENDIOS_DUMP_SVG") {
+            // QA: keep the SVG as the story wrote it (fframes' own dump has the text already turned into paths)
+            let _ = std::fs::write(std::path::Path::new(&d).join(format!("f{:05}.svg", frame.global_index)), &body);
+        }
         if let Some(p) = std::env::var_os("INCENDIOS_PROBE") {
             // probe pass: record the rasters this frame uses and draw nothing (nothing gets decoded)
             let mut used = String::new();
@@ -478,37 +482,14 @@ pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Re
     let _ = std::fs::remove_dir_all(&work);
     std::fs::create_dir_all(&work)?;
     let src = story.build_dir().join("assets");
-    let empty = work.join("empty");
-    std::fs::create_dir_all(&empty)?;
     let n = chunks.max(1);
     let mut list = String::new();
     for k in 0..n {
         let (a, b) = (frames * k / n, frames * (k + 1) / n);
         let range = format!("{a}f..{b}f");
-        let probe = work.join(format!("probe_{k}.txt"));
-        let st = std::process::Command::new(&exe)
-            .args(["render", &range, "--scale", "0.125", "-o"])
-            .arg(work.join(format!("probe_{k}.mp4")))
-            .env("INCENDIOS_PROBE", &probe)
-            .env("INCENDIOS_ASSETS", &empty)
-            .env("INCENDIOS_NO_AUDIO", "1")
-            .status()?;
-        anyhow::ensure!(st.success(), "probe of chunk {k} ({range}) failed");
-        let used: std::collections::BTreeSet<String> =
-            std::fs::read_to_string(&probe).unwrap_or_default().lines().filter(|l| !l.is_empty()).map(String::from).collect();
         let dir = work.join(format!("assets_{k}"));
-        std::fs::create_dir_all(&dir)?;
-        let mut bytes = 0u64;
-        for u in &used {
-            let from = src.join(u);
-            anyhow::ensure!(from.exists(), "chunk {k}: frame uses {u}, missing from build/assets");
-            let to = dir.join(u);
-            if std::fs::hard_link(&from, &to).is_err() {
-                std::fs::copy(&from, &to)?;
-            }
-            bytes += std::fs::metadata(&from)?.len();
-        }
-        eprintln!("chunk {}/{n}: frames {range}, {} rasters ({:.1} MB on disk)", k + 1, used.len(), bytes as f64 / 1e6);
+        let (nused, bytes) = subset_assets(story, &["render", &range, "--scale", "0.125", "-o", &work.join(format!("probe_{k}.mp4")).display().to_string()], &dir)?;
+        eprintln!("chunk {}/{n}: frames {range}, {nused} rasters ({:.1} MB on disk)", k + 1, bytes as f64 / 1e6);
         let part = work.join(format!("part_{k:02}.mp4"));
         let st = std::process::Command::new(&exe).args(["render", &range, "-o"]).arg(&part).env("INCENDIOS_ASSETS", &dir).env("INCENDIOS_NO_AUDIO", "1").status()?;
         anyhow::ensure!(st.success(), "render of chunk {k} ({range}) failed: {st}");
@@ -530,4 +511,40 @@ pub fn render_chunked(story: &Story, out: &std::path::Path, chunks: usize) -> Re
     anyhow::ensure!(st.success(), "ffmpeg concat/mux failed");
     eprintln!("render: {} chunks -> {}", n, out.display());
     Ok(())
+}
+
+/// Run this binary with `args` as a probe (`INCENDIOS_PROBE`: frames record their `<image href>` and draw nothing, no
+/// rasters loaded), then fill `dest` with hard links to just the rasters those frames use. Returns (count, bytes).
+pub fn subset_assets(story: &Story, args: &[&str], dest: &std::path::Path) -> Result<(usize, u64)> {
+    let src = story.build_dir().join("assets");
+    let _ = std::fs::remove_dir_all(dest);
+    let empty = dest.with_extension("empty");
+    std::fs::create_dir_all(&empty)?;
+    std::fs::create_dir_all(dest)?;
+    let probe = dest.with_extension("probe.txt");
+    let _ = std::fs::remove_file(&probe);
+    let st = std::process::Command::new(std::env::current_exe()?)
+        .args(args)
+        .env("INCENDIOS_PROBE", &probe)
+        .env("INCENDIOS_ASSETS", &empty)
+        .env("INCENDIOS_NO_AUDIO", "1")
+        .env_remove("INCENDIOS_DUMP_SVG")
+        .stdout(std::process::Stdio::null())
+        .status()?;
+    anyhow::ensure!(st.success(), "probe `{}` failed", args.join(" "));
+    let used: std::collections::BTreeSet<String> =
+        std::fs::read_to_string(&probe).unwrap_or_default().lines().filter(|l| !l.is_empty()).map(String::from).collect();
+    let mut bytes = 0u64;
+    for u in &used {
+        let from = src.join(u);
+        anyhow::ensure!(from.exists(), "a frame uses {u}, missing from build/assets");
+        let to = dest.join(u);
+        if std::fs::hard_link(&from, &to).is_err() {
+            std::fs::copy(&from, &to)?;
+        }
+        bytes += std::fs::metadata(&from)?.len();
+    }
+    let _ = std::fs::remove_dir_all(&empty);
+    let _ = std::fs::remove_file(&probe);
+    Ok((used.len(), bytes))
 }
