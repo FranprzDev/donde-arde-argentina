@@ -14,6 +14,7 @@ Everything in the video is generated with code from open data: the map, the anim
 | `assets_meta/` | Metadata for each satellite image (product, date, cloud cover, bounding box) and credits from earlier versions |
 | `fonts/` | Open fonts (OFL) |
 | `harness/` | Generic harness for data-story videos (`story.yaml` + data → video), with the `sismos-argentina` example and this video ported to `stories/incendios-argentina/` |
+| `harness-rs/` | **Canonical render path.** The all-Rust harness ([fframes](https://fframes.studio)): data prep, fact asserts, readability rules, render, score and QA. The current video is `harness-rs/stories/incendios-argentina/` |
 
 Heavy raw data (FIRMS archive, MODIS rasters, Sentinel-2) is not in the repo: the scripts download it.
 
@@ -45,7 +46,19 @@ Requirements: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmp
 
 No number is typed by hand in the renderer: all of them are read from the JSON files in `data/`, and `render_v9.py` has an `assert` for every verbal rounding («casi» / "almost", «más de» / "more than") and for every ranking value.
 
-## Harness (`harness/`)
+## Rust harness (`harness-rs/`, canonical)
+
+The video is built with `harness-rs/`: everything (prep, facts, render, music, QA) is Rust. See `harness-rs/README.md`.
+
+```bash
+cd harness-rs && source env.sh && cd stories/incendios-argentina
+cargo run --release -- build            # prep -> facts -> check -> assets -> music -> render -> qa
+```
+
+An earlier experimental port lived in `fframes/`; it only covered part of the video and was removed once `harness-rs/`
+rendered the whole video and passed QA.
+
+## Python harness (`harness/`, reference)
 
 `harness/` is the generic version of this pipeline: a Python package that builds a short video (≤ 60 s) from a
 `story.yaml` (the scenes and their text) and a `facts.py` (every number shown on screen, with an `assert` for every
