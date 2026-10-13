@@ -1,0 +1,118 @@
+{
+ "er_2020": 37506,
+ "er_median_2012_2019": 3476.0,
+ "er_median_other13": 5391.0,
+ "er_ratio_2012_2019": 10.789988492520138,
+ "er_ratio_other13": 6.95715080690039,
+ "er_by_year": {
+  "2012": 5988,
+  "2013": 6401,
+  "2014": 1989,
+  "2015": 4569,
+  "2016": 2383,
+  "2017": 1876,
+  "2018": 6711,
+  "2019": 2034,
+  "2020": 37506,
+  "2021": 14159,
+  "2022": 19669,
+  "2023": 10695,
+  "2024": 3011,
+  "2025": 5391
+ },
+ "cord_total": 31449,
+ "cord_share_decmar": 0.8304238608540813,
+ "cord_share_janfeb": 0.5590002861776209,
+ "burn_total_ha": 44093982.72017459,
+ "burn_unique_ha": 26642263.781012468,
+ "land_ha": 279462711.413319,
+ "unique_share_land": 0.09533387708963134,
+ "pitch_every_s": 7.154731664909376,
+ "n_caba_total": 2144.462808933244,
+ "corr_janfeb_2022_ha": 958776.3890705297,
+ "n_caba_corr": 46.629045089736,
+ "caba_ha": 20561.78476795734,
+ "corr_focos_janfeb_2022": 37782,
+ "er_2020_ha": 333311.7513933679,
+ "comarca_2025_ha": 6025.301509442938,
+ "comarca_2026_ha": 42265.848258035214,
+ "comarca_ratio": 7.014727510614295,
+ "tuc": {
+  "total": 60136,
+  "zafra": 57865,
+  "cane_zafra": 53625,
+  "share_zafra": 0.9622355993082347,
+  "share_cane_zafra": 0.8917287481708128,
+  "cane_ha_tucuman": 302320
+ },
+ "pat_facts": {
+  "elbolson_2025_viviendas_perdida_total": {
+   "value": 166,
+   "source": "Gobierno de Río Negro, «En cifras, el impacto del incendio en El Bolsón», 19-02-2025",
+   "url": "https://rionegro.gov.ar/articulo/52954/en-cifras-el-impacto-del-incendio-en-el-bolson",
+   "quote": "el fuego alcanzó 221 viviendas. De ese total, 166 sufrieron pérdidas totales y otras 55 presentan daños severos"
+  },
+  "elbolson_2025_personas_afectadas": {
+   "value": 612,
+   "source": "Gobierno de Río Negro, 19-02-2025",
+   "url": "https://rionegro.gov.ar/articulo/52954/en-cifras-el-impacto-del-incendio-en-el-bolson",
+   "quote": "612 personas han sido afectadas directamente"
+  },
+  "elbolson_2025_muertes": {
+   "value": 1,
+   "source": "Infobae, 01-02-2025 (confirmado por el gobernador Weretilneck y el intendente Pogliano)",
+   "url": "https://www.infobae.com/sociedad/2025/02/02/un-hombre-murio-en-los-incendios-en-el-bolson-y-el-fuego-sigue-avanzando/"
+  },
+  "patriada_2026_ha": {
+   "value": 30000,
+   "qualifier": "más de",
+   "source": "La Nación, 29-03-2026, citando a la Secretaría de Bosques / gobernación de Chubut",
+   "url": "https://www.lanacion.com.ar/sociedad/a-casi-tres-meses-del-inicio-declaran-extinguido-uno-de-los-incendios-mas-devastadores-de-la-nid29032026/",
+   "quote": "El incendio denominado Primera Cantera-Puerto Patriada afectó más de 30.000 hectáreas"
+  }
+ },
+ "total_focos": 2550467,
+ "share_aug_sep": 0.40624716963599217,
+ "share_norte": 0.6172559770426357,
+ "causas": {
+  "total": 224748,
+  "humana": 105576,
+  "negligencia": 57760,
+  "intencional": 47816,
+  "natural": 11458,
+  "desconocida": 107714,
+  "conocida": 117034,
+  "humana_sobre_conocida": 0.902096826563221,
+  "natural_sobre_conocida": 0.09790317343677905,
+  "desconocida_sobre_total": 0.47926566643529644,
+  "humana_sobre_total": 0.46975278979123286,
+  "negl_sobre_conocida": 0.49353179417946924,
+  "int_sobre_conocida": 0.40856503238375175,
+  "prov": {
+   "Entre Ríos": {
+    "humana_sobre_conocida": 0.9672281776416539,
+    "desconocida_sobre_total": 0.38880569075252713
+   },
+   "Córdoba": {
+    "humana_sobre_conocida": 0.9937132156233279,
+    "desconocida_sobre_total": 0.1728258464262005
+   },
+   "Corrientes": {
+    "humana_sobre_conocida": 0.8789300797747537,
+    "desconocida_sobre_total": 0.38052325581395346
+   },
+   "Chubut": {
+    "humana_sobre_conocida": 0.9858797972483707,
+    "desconocida_sobre_total": 0.2648389672611126
+   },
+   "Formosa": {
+    "humana_sobre_conocida": 0.9389250814332247,
+    "desconocida_sobre_total": 0.26555023923444976
+   },
+   "La Pampa": {
+    "humana_sobre_conocida": 0.37133808392715756,
+    "desconocida_sobre_total": 0.2661243463102847
+   }
+  }
+ }
+}

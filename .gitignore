@@ -1,0 +1,9 @@
+data/raw/
+*.npz
+*.npy
+*.mp4
+*.wav
+build/
+burn/raw/
+burn/umd/
+__pycache__/
