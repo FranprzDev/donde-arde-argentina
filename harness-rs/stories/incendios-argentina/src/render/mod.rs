@@ -179,13 +179,13 @@ impl Incendios {
         let c = self.lut[(70.0 + 140.0 * (v / vmax).powf(0.55)) as usize];
         [c[0] as u8, c[1] as u8, c[2] as u8]
     }
-    fn text_w(&self, frame: &mut Frame, ctx: &FFramesContext, f: Font, size: f64, s: &str) -> f64 {
+    fn text_w<'a>(&'a self, frame: &mut Frame, ctx: &FFramesContext<'a, '_>, f: Font, size: f64, s: &'a str) -> f64 {
         let fq = FontQuery { family: f.family, size: size as _, weight: f.weight as _, ..Default::default() };
         frame.text_width(ctx, fq, s).map(|w| w as f64).unwrap_or(size * 0.5 * s.chars().count() as f64)
     }
 
     /// render_v10.render_at, ported
-    pub fn render_at(&self, t: f64, frame: &mut Frame, ctx: &FFramesContext) -> String {
+    pub fn render_at<'a>(&'a self, t: f64, frame: &mut Frame, ctx: &FFramesContext<'a, '_>) -> String {
         let tl = &self.tl;
         let mut o = Svg::new();
         o.s.push_str(&svg::defs(W, H));
@@ -373,7 +373,7 @@ impl Incendios {
         let tl = &self.tl;
         let a = clamp((t - tl.t_src) / 0.4);
         let _ = write!(o.s, r#"<rect width="{W}" height="{H}" fill="{}" fill-opacity="{}"/>"#, rgb(BG), op(225.0 / 255.0 * a));
-        let size = self.st.texts.iter().find(|x| x.beat == "fuentes").map(|x| x.size).unwrap_or(52.0);
+        let size = self.st.beat("fuentes").and_then(|b| b.texts.first()).map(|x| x.size).unwrap_or(52.0);
         let vx = TX + 330.0;
         let mut y = 300.0;
         for (i, lv) in self.st.file.sources.iter().enumerate() {

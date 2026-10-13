@@ -65,18 +65,18 @@ WARP_C = 0.030            # s per month, 2025
 ASH_PAUSE = 0.20
 SCAR_DELAY = 0.35
 RK_STEP = 0.025
-FLY_TU = 0.60
+FLY_TU = 0.55
 FLY_ER = 0.60
-FLY_PA = 0.65
-MAP_TU = 5.05
-MAP_ER = 4.70
-MAP_PA = 5.05
-ZIN = 0.65
-ZOUT = 0.30
+FLY_PA = 0.60
+MAP_TU = 5.025
+MAP_ER = 4.675
+MAP_PA = 5.025
+ZIN = 0.60
+ZOUT = 0.25
 ZHOLD_TU = 2.40
 ZHOLD_ER = 3.00
-CL_ZOOM = 0.42
-CL_FILL = 0.55
+CL_ZOOM = 0.40
+CL_FILL = 0.50
 
 [marks]
 T_X0 = "3.2 * SPACE_K"
@@ -109,7 +109,7 @@ S_PA1 = "S_PA0 + MAP_PA"
 T_CL = "S_PA1 + CL_ZOOM"
 CL_DIP = "T_CL + 0.40"
 CL_L2 = "T_CL + CL_FILL"
-T_SRC = "CL_L2 + 2.75 + 0.30"
+T_SRC = "CL_L2 + 3.10 + 0.30"
 TOTAL = "T_SRC + 9.40"
 
 # ---------------------------------------------------------------------------------------------------------------------------

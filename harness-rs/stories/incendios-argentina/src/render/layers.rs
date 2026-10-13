@@ -627,7 +627,7 @@ impl Incendios {
         x
     }
 
-    pub(super) fn draw_stop(&self, o: &mut Svg, t: f64, i: usize, c: &Cam, frame: &mut Frame, ctx: &FFramesContext) {
+    pub(super) fn draw_stop<'a>(&'a self, o: &mut Svg, t: f64, i: usize, c: &Cam, frame: &mut Frame, ctx: &FFramesContext<'a, '_>) {
         let (t0, t1) = self.tl.stops[i];
         let fly = self.tl.fly[i];
         let ao = clamp((t - t0 + fly) / 0.45) * (1.0 - clamp((t - t1 + 0.1) / 0.35));

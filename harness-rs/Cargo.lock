@@ -1194,12 +1194,14 @@ name = "incendios-argentina"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "csv",
  "datavid",
  "fframes",
  "geo",
  "indexmap",
  "rand 0.8.8",
+ "rand_distr",
  "rand_pcg",
  "rayon",
  "serde",
