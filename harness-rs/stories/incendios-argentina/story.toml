@@ -1,0 +1,642 @@
+# «¿Dónde arde Argentina?» — story config for the datavid harness (on-screen text in Spanish).
+[story]
+title = "¿Dónde arde Argentina?"
+slug = "incendios-argentina"
+locale = "es"
+
+[video]
+width = 1920
+height = 1080
+fps = 30
+max_duration = 60.0
+
+[rules]
+min_font_px = 48
+max_words_per_beat = 12
+sec_per_word = 0.35
+base_hold = 1.0
+min_hold = 2.5
+
+[audio]
+lufs = -14.0
+true_peak = -1.5
+lufs_tolerance = 0.5
+seed = 23
+
+# Raw inputs. ${FIRES_RAW} is the folder with the heavy downloads (not committed): FIRMS CSVs and the MODIS monthly windows.
+[inputs]
+viirs_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data"
+modis_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/burn/umd"
+s2_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/fframes/raw/s2"
+flags_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/flags"
+natgeo = "../../../data/natgeo_v7.json"
+neighbours = "../../../data/geo_v2.json"
+provincias = "../../../data/provincias.geojson"
+departamentos = "../../../data/departamentos.geojson"
+causas_csv = "../../../data/incendios-cantidad-causas-provincia_1993-2019.csv"
+eeaoc_csv = "../../../data/eeaoc_ra370_cana_departamentos.csv"
+patagonia_facts = "../../../data/patagonia_facts.json"
+ne_land = "../../../data/ne_50m_land.geojson"
+fonts_dir = "media"
+# Python v10 outputs, used ONLY by `incendios verify` to check that the Rust prep reproduces the same numbers.
+reference_dir = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/v10/data"
+reference_viirs_stats = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/stats.json"
+reference_points = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/points.npz"
+
+# ---------------------------------------------------------------------------------------------------------------------------
+# Timeline. Plain numbers in [params]; [marks] are expressions over params, other marks and facts (any order).
+# v10 timing, except (to give the closing card the reading time it needs inside 60 s; see README "Closing card tradeoff"):
+#   * «EL SOL CALIENTA.» enters 0.55 s earlier (over the end of the globe shot), so the hard cut lands at 7.20 s;
+#   * the scar beat and the «= CASI 12 TUCUMANES» beat are one card: «26,6 MILLONES DE HA» / «QUEMADAS = CASI 12 TUCUMANES»
+#     (the line «QUEMADAS: CASI 1 DE CADA 10 DEL PAÍS» is cut);
+#   * every text is held exactly what the reading rule asks (v10 had 0.03–0.35 s of slack per card);
+#   * textless moves are ~15–20 % shorter (ash, ranking sweep, flights, satellite zooms, close).
+[params]
+SPACE_K = 1.25
+T_HOOK0 = 0.45
+T_TXT1 = 3.40
+T_TXT1B = 4.45
+T_COOL = 6.40
+NOS_DELAY = 0.12
+LAND_DELAY = 0.55
+WARP_A = 0.036            # s per month, Jan-Dec 2012
+WARP_B = 0.0215           # s per month, 2013-2024
+WARP_C = 0.030            # s per month, 2025
+ASH_PAUSE = 0.20
+SCAR_DELAY = 0.35
+RK_STEP = 0.025
+FLY_TU = 0.55
+FLY_ER = 0.60
+FLY_PA = 0.60
+MAP_TU = 5.025
+MAP_ER = 4.675
+MAP_PA = 5.025
+ZIN = 0.60
+ZOUT = 0.25
+ZHOLD_TU = 2.40
+ZHOLD_ER = 3.00
+CL_ZOOM = 0.40
+CL_FILL = 0.50
+
+[marks]
+T_X0 = "3.2 * SPACE_K"
+T_MAP = "3.7 * SPACE_K"
+T_HOOK1 = "T_TXT1 - 0.10"
+T_SPARK = "max(T_TXT1 + 3.80, T_TXT1B + 2.75)"
+T_NOS = "T_SPARK + NOS_DELAY"
+T_TXT2_END = "T_NOS + 4.15"
+T_LAND = "T_SPARK + LAND_DELAY"
+T_A1 = "T_LAND + 12 * WARP_A + 144 * WARP_B + 12 * WARP_C"
+T_ASH = "T_A1 + ASH_PAUSE"
+T_SCAR = "T_ASH + SCAR_DELAY"
+T_D1 = "T_SCAR + 0.90"
+T_TU1 = "T_SCAR + 3.80 + 0.30"
+T_RK = "T_TU1"
+T_RK2 = "T_RK + 0.15 + 23 * RK_STEP + 0.25"
+T_RK_END = "T_RK2 + 0.05 + 5.20 + 0.30"
+S_TU0 = "T_RK_END + FLY_TU"
+S_TU1 = "S_TU0 + MAP_TU"
+Z_TU0 = "S_TU1 - 0.10"
+Z_TU1 = "Z_TU0 + ZIN"
+Z_TU2 = "Z_TU1 + ZHOLD_TU"
+S_ER0 = "Z_TU2 + ZOUT + FLY_ER"
+S_ER1 = "S_ER0 + MAP_ER"
+Z_ER0 = "S_ER1 - 0.10"
+Z_ER1 = "Z_ER0 + ZIN"
+Z_ER2 = "Z_ER1 + ZHOLD_ER"
+S_PA0 = "Z_ER2 + ZOUT + FLY_PA"
+S_PA1 = "S_PA0 + MAP_PA"
+T_CL = "S_PA1 + CL_ZOOM"
+CL_DIP = "T_CL + 0.40"
+CL_L2 = "T_CL + CL_FILL"
+T_SRC = "CL_L2 + 3.10 + 0.30"
+TOTAL = "T_SRC + 9.40"
+
+# ---------------------------------------------------------------------------------------------------------------------------
+# Fact asserts: every verbal rounding on screen is guarded here (the build stops if the data stops supporting the words).
+[[assert]]
+fact = "total_focos"
+eq = 2550467
+why = "VIIRS series used everywhere (FIRMS type 0, confidence n/h, 2012-2025)"
+[[assert]]
+fact = "hum_10"
+eq = 9
+why = "«9 DE CADA 10 CON CAUSA CONOCIDA» (90,2 % human among fires with known cause)"
+[[assert]]
+fact = "uniq_mha_txt"
+eq = "26,6"
+why = "«26,6 MILLONES DE HA»"
+[[assert]]
+fact = "tucumanes"
+ge = 11.5
+lt = 12.0
+why = "«CASI 12 TUCUMANES» is honest only in [11,5; 12)"
+[[assert]]
+fact = "tucumanes_indec"
+ge = 11.5
+lt = 12.0
+why = "same with INDEC's official area"
+[[assert]]
+fact = "tucumanes_n"
+eq = 12
+why = "the number on screen"
+[[assert]]
+fact = "top5_share"
+ge = 0.525
+lt = 0.535
+why = "«5 PROVINCIAS = 53 %»"
+[[assert]]
+fact = "top5_names"
+eq = ["FORMOSA", "LA PAMPA", "SANTA FE", "CORRIENTES", "SANTIAGO DEL ESTERO"]
+why = "the five names on screen"
+[[assert]]
+fact = "tuc_pct"
+eq = 89
+why = "«89 % DE SUS FOCOS EN ZONA CAÑERA, EN PLENA ZAFRA»"
+[[assert]]
+fact = "er_2020"
+eq = 37506
+why = "«37.506 FOCOS»"
+[[assert]]
+fact = "er_ratio"
+gt = 6.5
+lt = 7.0
+why = "«CASI 7 VECES LO HABITUAL» (lo habitual = median of the other 13 years)"
+[[assert]]
+fact = "er_is_record"
+eq = 1
+why = "2020 is the Entre Ríos record year"
+[[assert]]
+fact = "pa26"
+eq = 42000
+why = "«42.000 HA» (Comarca Andina box, Jan-Mar 2026, floored)"
+[[assert]]
+fact = "pa25"
+eq = 6000
+why = "2025 season (Jan-Mar), floored"
+[[assert]]
+fact = "pa_ratio"
+ge = 7.0
+lt = 8.0
+why = "«7 VECES MÁS QUE EN 2025» (whole part of 7,01)"
+
+# ---------------------------------------------------------------------------------------------------------------------------
+# Beats and their on-screen texts (Spanish). t1 = the moment a text starts its 0.3 s fade-out.
+
+[[beat]]
+id = "intro"
+kind = "globe_intro"
+start = 0
+end = "T_SPARK"
+  [[beat.text]]
+  id = "hook1"
+  template = "¿DÓNDE ARDE"
+  size = 132
+  font = "anton"
+  t0 = "T_HOOK0"
+  t1 = "T_HOOK1"
+  card = "hook"
+  [[beat.text]]
+  id = "hook2"
+  template = "ARGENTINA?"
+  size = 132
+  font = "anton"
+  t0 = "T_HOOK0 + 0.12"
+  t1 = "T_HOOK1"
+  card = "hook"
+  [[beat.text]]
+  id = "sol"
+  template = "EL SOL CALIENTA."
+  size = 100
+  font = "anton"
+  t0 = "T_TXT1"
+  t1 = "T_SPARK"
+  card = "sol"
+  [[beat.text]]
+  id = "sol2"
+  template = "EL SOL NO PRENDE FUEGO."
+  size = 100
+  font = "anton"
+  t0 = "T_TXT1B"
+  t1 = "T_SPARK"
+  card = "sol"
+
+[[beat]]
+id = "spark"
+kind = "timelapse"
+start = "T_SPARK"
+end = "T_ASH"
+  [[beat.text]]
+  id = "nos"
+  template = "NOSOTROS SÍ."
+  size = 150
+  font = "anton"
+  t0 = "T_NOS"
+  t1 = "T_TXT2_END"
+  card = "nos"
+  [[beat.text]]
+  id = "causa"
+  template = "{hum_10} DE CADA 10 CON CAUSA CONOCIDA"
+  allow_digits = "the base of the proportion «N de cada 10» is wording, not data"
+  size = 66
+  font = "anton"
+  t0 = "T_NOS + 0.25"
+  t1 = "T_TXT2_END"
+  card = "nos"
+  [[beat.text]]
+  id = "year"
+  template = "{y0}"
+  size = 180
+  font = "anton"
+  t0 = "T_LAND"
+  t1 = "T_ASH - 0.2"
+  label = true
+  [[beat.text]]
+  id = "years"
+  template = "{y0}–{y1}"
+  size = 180
+  font = "anton"
+  t0 = "T_A1"
+  t1 = "T_ASH - 0.2"
+  label = true
+  [[beat.text]]
+  id = "axis"
+  template = "{y0}"
+  size = 48
+  font = "mono700"
+  t0 = "T_LAND"
+  t1 = "T_ASH - 0.2"
+  label = true
+  [[beat.text]]
+  id = "legend1"
+  template = "1 punto = 1 foco de calor (satélite)"
+  allow_digits = "a legend's definition, not data"
+  size = 48
+  font = "inter600"
+  t0 = "T_LAND + 0.3"
+  t1 = "T_RK"
+  label = true
+
+[[beat]]
+id = "scar"
+kind = "big_number"
+start = "T_ASH"
+end = "T_TU1"
+  [[beat.text]]
+  id = "uniq"
+  template = "{uniq_mha_txt} MILLONES"
+  size = 150
+  font = "anton"
+  t0 = "T_SCAR"
+  t1 = "T_TU1 - 0.3"
+  card = "area"
+  [[beat.text]]
+  id = "unit"
+  template = "DE HA"
+  size = 80
+  font = "anton"
+  t0 = "T_SCAR + 0.3"
+  t1 = "T_TU1 - 0.3"
+  card = "area"
+  [[beat.text]]
+  id = "tucs"
+  template = "QUEMADAS = CASI {tucumanes_n} TUCUMANES"
+  size = 90
+  font = "anton"
+  t0 = "T_SCAR + 0.35"
+  t1 = "T_TU1 - 0.3"
+  card = "area"
+  [[beat.text]]
+  id = "legend2"
+  template = "gris = área quemada"
+  size = 48
+  font = "inter600"
+  t0 = "T_SCAR"
+  t1 = "T_RK"
+  label = true
+
+[[beat]]
+id = "ranking"
+kind = "ranking"
+start = "T_RK"
+end = "T_RK_END"
+  [[beat.text]]
+  id = "hdr"
+  template = "{top_n} PROVINCIAS = {top5_share|pct} %"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.05"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "r1"
+  template = "{rk1_name}"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.25"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "r2"
+  template = "{rk2_name}"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.34"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "r3"
+  template = "{rk3_name}"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.43"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "r4"
+  template = "{rk4_name}"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.52"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "r5"
+  template = "{rk5_name}"
+  size = 72
+  font = "anton"
+  t0 = "T_RK2 + 0.61"
+  t1 = "T_RK_END - 0.3"
+  card = "top5"
+  [[beat.text]]
+  id = "ranks"
+  template = "{top_n}"
+  size = 60
+  font = "anton"
+  t0 = "T_RK2 + 0.25"
+  t1 = "T_RK_END - 0.3"
+  label = true
+
+[[beat]]
+id = "tucuman"
+kind = "stop"
+start = "S_TU0"
+end = "S_TU1"
+  [[beat.text]]
+  id = "head"
+  template = "TUCUMÁN"
+  size = 52
+  font = "mono800"
+  t0 = "S_TU0 + 0.12"
+  t1 = "S_TU1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "num"
+  template = "{tuc_pct} %"
+  size = 150
+  font = "anton"
+  t0 = "S_TU0 + 0.32"
+  t1 = "S_TU1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "unit"
+  template = "DE SUS FOCOS"
+  size = 80
+  font = "anton"
+  t0 = "S_TU0 + 0.62"
+  t1 = "S_TU1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "line"
+  template = "EN ZONA CAÑERA, EN PLENA ZAFRA"
+  size = 66
+  font = "anton"
+  t0 = "S_TU0 + 0.72"
+  t1 = "S_TU1 - 0.05"
+  card = "stop"
+
+[[beat]]
+id = "burruyacu"
+kind = "satellite_zoom"
+start = "Z_TU0"
+end = "Z_TU2"
+  [[beat.text]]
+  id = "l1"
+  template = "BURRUYACÚ, TUCUMÁN"
+  size = 52
+  font = "mono800"
+  t0 = "Z_TU1 - 0.15"
+  t1 = "Z_TU2 - 0.05"
+  card = "s2"
+  [[beat.text]]
+  id = "l2"
+  template = "{tuc_s2_date|ddmmyyyy} · Sentinel-2"
+  allow_digits = "«Sentinel-2» is the satellite's name"
+  size = 52
+  font = "inter600"
+  t0 = "Z_TU1 - 0.15"
+  t1 = "Z_TU2 - 0.05"
+  card = "s2"
+
+[[beat]]
+id = "entre_rios"
+kind = "stop"
+start = "S_ER0"
+end = "S_ER1"
+  [[beat.text]]
+  id = "head"
+  template = "ENTRE RÍOS · {er_year}"
+  size = 52
+  font = "mono800"
+  t0 = "S_ER0 + 0.12"
+  t1 = "S_ER1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "num"
+  template = "{er_2020|int}"
+  size = 150
+  font = "anton"
+  t0 = "S_ER0 + 0.32"
+  t1 = "S_ER1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "unit"
+  template = "FOCOS"
+  size = 80
+  font = "anton"
+  t0 = "S_ER0 + 0.62"
+  t1 = "S_ER1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "line"
+  template = "CASI {er_x} VECES LO HABITUAL"
+  size = 66
+  font = "anton"
+  t0 = "S_ER0 + 0.72"
+  t1 = "S_ER1 - 0.05"
+  card = "stop"
+
+[[beat]]
+id = "delta"
+kind = "satellite_zoom"
+start = "Z_ER0"
+end = "Z_ER2"
+  [[beat.text]]
+  id = "l1"
+  template = "ISLAS DEL DELTA"
+  size = 52
+  font = "mono800"
+  t0 = "Z_ER1 - 0.15"
+  t1 = "Z_ER2 - 0.05"
+  card = "s2"
+  [[beat.text]]
+  id = "l2"
+  template = "{er_s2_date|ddmmyyyy} · Sentinel-2"
+  allow_digits = "«Sentinel-2» is the satellite's name"
+  size = 52
+  font = "inter600"
+  t0 = "Z_ER1 - 0.15"
+  t1 = "Z_ER2 - 0.05"
+  card = "s2"
+  [[beat.text]]
+  id = "pin"
+  template = "ROSARIO"
+  size = 48
+  font = "mono800"
+  t0 = "Z_ER1 - 0.15"
+  t1 = "Z_ER2 - 0.05"
+  card = "s2"
+
+[[beat]]
+id = "comarca"
+kind = "stop"
+start = "S_PA0"
+end = "S_PA1"
+  [[beat.text]]
+  id = "head"
+  template = "COMARCA ANDINA · {pa_year}"
+  size = 52
+  font = "mono800"
+  t0 = "S_PA0 + 0.12"
+  t1 = "S_PA1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "num"
+  template = "{pa26|int}"
+  size = 150
+  font = "anton"
+  t0 = "S_PA0 + 0.32"
+  t1 = "S_PA1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "unit"
+  template = "HA"
+  size = 80
+  font = "anton"
+  t0 = "S_PA0 + 0.62"
+  t1 = "S_PA1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "line"
+  template = "{pa_x} VECES MÁS QUE EN {pa_prev}"
+  size = 66
+  font = "anton"
+  t0 = "S_PA0 + 0.72"
+  t1 = "S_PA1 - 0.05"
+  card = "stop"
+  [[beat.text]]
+  id = "date0"
+  template = "{c24_date|mon_es}"
+  size = 48
+  font = "mono800"
+  t0 = "S_PA0 + 0.4"
+  t1 = "S_PA0 + 0.92"
+  label = true
+  [[beat.text]]
+  id = "date1"
+  template = "{c25_date|mon_es}"
+  size = 48
+  font = "mono800"
+  t0 = "S_PA0 + 0.92"
+  t1 = "S_PA0 + 2.07"
+  label = true
+  [[beat.text]]
+  id = "date2"
+  template = "{c26_date|mon_es}"
+  size = 48
+  font = "mono800"
+  t0 = "S_PA0 + 2.07"
+  t1 = "S_PA1"
+  label = true
+  [[beat.text]]
+  id = "sat"
+  template = "Sentinel-2"
+  allow_digits = "the satellite's name"
+  size = 48
+  font = "inter600"
+  t0 = "S_PA0 + 0.4"
+  t1 = "S_PA1"
+  label = true
+  [[beat.text]]
+  id = "k25"
+  template = "■ {pa_prev}"
+  size = 48
+  font = "mono800"
+  t0 = "S_PA0 + 1.15"
+  t1 = "S_PA1"
+  label = true
+  [[beat.text]]
+  id = "k26"
+  template = "■ {pa_year}"
+  size = 48
+  font = "mono800"
+  t0 = "S_PA0 + 2.3"
+  t1 = "S_PA1"
+  label = true
+
+[[beat]]
+id = "cierre"
+kind = "closing"
+start = "S_PA1"
+end = "T_SRC"
+  [[beat.text]]
+  id = "l1"
+  template = "YA NO FALTAN DATOS."
+  size = 124
+  font = "anton"
+  t0 = "CL_L2"
+  t1 = "T_SRC - 0.3"
+  card = "close"
+  [[beat.text]]
+  id = "l2"
+  template = "FALTA RESPONSABILIDAD."
+  size = 124
+  font = "anton"
+  t0 = "CL_L2 + 0.25"
+  t1 = "T_SRC - 0.3"
+  card = "close"
+
+# The closing card: short source names in a label/value grid, then the credits verbatim. It is not word-capped (a reference
+# card) but it does meet the hold rule: 24 words -> 0.35 x 24 + 1 = 9.4 s. Its texts are generated from [[source]] and
+# [[credit]] ("label value" per row), so the rule check reads exactly what is drawn.
+[[beat]]
+id = "fuentes"
+kind = "sources"
+start = "T_SRC"
+end = "TOTAL"
+exempt_words = true
+card_size = 52
+
+[[source]]
+label = "Satélites"
+value = "NASA · Copernicus"
+[[source]]
+label = "Datos"
+value = "Min. Ambiente · EEAOC · INDEC"
+
+[[credit]]
+label = "Pipeline de Datos, Generación de Video & Producción final:"
+value = "Harness Engineering with AI"
+[[credit]]
+label = "Director & Revisor:"
+value = "Francisco Perez"
