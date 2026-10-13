@@ -7,3 +7,6 @@ build/
 burn/raw/
 burn/umd/
 __pycache__/
+
+# fframes port keeps its build/ scripts in git (outputs are ignored in fframes/.gitignore)
+!fframes/build/
