@@ -62,26 +62,7 @@ pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
     let asserts = std::fs::read_to_string(story.build_dir().join("asserts.txt")).unwrap_or_default();
     r.section("Fact asserts", &format!("```\n{asserts}```"));
     r.check("fact asserts", !asserts.is_empty() && !asserts.contains("FAIL"), &format!("{} asserts", asserts.lines().count()));
-    // ---- smallest font drawn
-    let mut min_font = f64::MAX;
-    let mut at = 0.0;
-    let mut tt = 0.25;
-    while tt < story.duration() {
-        let out = self_cmd(&["svg", &format!("{tt:.2}s")])?;
-        let s = String::from_utf8_lossy(&out.stdout);
-        for part in s.split("font-size=\"").skip(1) {
-            if let Some(v) = part.split('"').next().and_then(|v| v.parse::<f64>().ok()) {
-                if v < min_font {
-                    min_font = v;
-                    at = tt;
-                }
-            }
-        }
-        tt += 1.0;
-    }
-    let minf = story.file.rules.min_font_px;
-    r.check("smallest text drawn", min_font >= minf, &format!("{min_font} px at {at:.2} s (min {minf} px; sampled every 1 s from the final SVG)"));
-    // ---- QA frames
+    // ---- QA frames + the final SVG of a frame every 2 s (one fframes process: loading the assets is the slow part)
     let m = |n: &str| story.m(n);
     let shots = [
         ("01_hook_globe", 1.6),
@@ -96,21 +77,44 @@ pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
         ("10_close", m("CL_L2") + 1.5),
         ("11_sources_credits", m("T_SRC") + 3.0),
     ];
-    let times: Vec<String> = shots.iter().map(|s| format!("{:.3}s", s.1)).collect();
+    let tok = |t: f64| format!("{t:.2}s");
+    let mut times: Vec<String> = shots.iter().map(|s| tok(s.1)).collect();
+    let mut tt = 0.5;
+    while tt < story.duration() {
+        times.push(tok(tt));
+        tt += 2.0;
+    }
     let tmp = qa_dir.join("raw");
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp)?;
-    let out = self_cmd(&["frame", &times.join(","), "-o", &tmp.display().to_string()])?;
+    let out = self_cmd(&["frame", &times.join(","), "-o", &tmp.display().to_string(), "--svg"])?;
     if !out.status.success() {
         bail!("fframes frame failed: {}", String::from_utf8_lossy(&out.stderr));
     }
-    let mut pngs: Vec<_> = std::fs::read_dir(&tmp)?.filter_map(|e| e.ok()).map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "png")).collect();
-    pngs.sort();
+    let (mut min_font, mut at) = (f64::MAX, String::new());
+    for e in std::fs::read_dir(&tmp)?.filter_map(|e| e.ok()) {
+        let p = e.path();
+        if p.extension().is_some_and(|x| x == "svg") {
+            let s = std::fs::read_to_string(&p)?;
+            for part in s.split("font-size=\"").skip(1) {
+                if let Some(v) = part.split('"').next().and_then(|v| v.trim_end_matches("px").parse::<f64>().ok()) {
+                    if v < min_font {
+                        min_font = v;
+                        at = p.file_stem().unwrap().to_string_lossy().to_string();
+                    }
+                }
+            }
+        }
+    }
+    let minf = story.file.rules.min_font_px;
+    r.check("smallest text drawn", min_font >= minf, &format!("{min_font} px at {at} (min {minf} px; final SVG of {} frames)", times.len()));
     let mut list = String::new();
-    for (p, (name, t)) in pngs.iter().zip(shots.iter()) {
-        let dst = qa_dir.join(format!("{name}.png"));
-        std::fs::rename(p, &dst)?;
-        list.push_str(&format!("- `{name}.png` — {t:.2} s\n"));
+    for (name, t) in shots.iter() {
+        let src = tmp.join(format!("{}.png", tok(*t)));
+        if src.exists() {
+            std::fs::rename(&src, qa_dir.join(format!("{name}.png")))?;
+            list.push_str(&format!("- `{name}.png` — {t:.2} s\n"));
+        }
     }
     let _ = std::fs::remove_dir_all(&tmp);
     r.md.push('\n');
