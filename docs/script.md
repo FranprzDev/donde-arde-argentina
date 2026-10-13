@@ -1,3 +1,37 @@
+# v8 — «¿Dónde arde Argentina?» (Historia visual, 59,47 s, 1080p30)
+
+**v8 = v7 + notas del autor (13-10-2026):**
+1. **Estructura:** primero el mapa general de cómo arde el país (gancho, chispa, 14 años de focos, 26,6 M ha, ranking de las 24 jurisdicciones); después **3 paradas rápidas**, cada una «mapa → corte seco a una foto real de ese tipo de fuego»: **Tucumán (caña)** → **Entre Ríos, islas del Delta 2020 (pastizal)** → **Comarca Andina (bosque)**. Corrientes deja de ser parada (sigue en el ranking, puesto 4, y en el titular de La Nación).
+2. **Cierre:** salen «SABEMOS DÓNDE Y CUÁNDO ARDE.» (+ nota gris) y «NO QUEMES. SI VES FUEGO, LLAMÁ AL 911.». Queda **«YA NO FALTAN DATOS. / FALTA RESPONSABILIDAD.»** sobre el país entero: las 24 jurisdicciones contorneadas y encendidas, y el mapa final con **todo lo que ardió 2012–2025** (cicatriz MODIS a plena intensidad + los 2.550.467 focos VIIRS que se acumulan en 1,5 s). Silencio musical antes de las dos líneas, como en v5–v7.
+3. **País entero marcado:** desde la primera parada todos los límites provinciales quedan encendidos (ámbar tenue); la provincia de la parada, más fuerte; ya no se oscurece el resto del país.
+4. **Titulares de vuelta, en contexto** (citas textuales re-tipografiadas, medio + fecha, ≥ 36 px; tarjetas hl_0..hl_3 de v4, código de v5), cada uno con su línea al lugar: La Nación 15/02/2022 (Iberá) sobre la cicatriz nacional, con la cicatriz Corrientes 2022 resaltada; La Gaceta 28/06/2025 (autopista a Famaillá) en Tucumán; Clarín 27/07/2020 (Rosario / islas de Entre Ríos) en el Delta; Infobae 01/02/2025 (El Bolsón) en la Comarca. Cada uno ≥ 1,8 s en pantalla.
+5. **Fotos nuevas, a pantalla completa** (1,6 s, empuje lento): cañaveral ardiendo (cytoon/Flickr, CC BY 2.0 — no hay foto abierta de una quema de caña en Tucumán; el pie lo dice: «foto: Queensland, Australia»); pastizal en el Delta (Ministerio de Ambiente, CC BY 4.0); bosque en Puerto Patriada, Chubut, ene-2026 (CatrielGB, CC BY-SA 4.0: no hay alternativa DP/CC BY de un incendio forestal activo en la Comarca). Salen las fotos chicas de v7 (Landsat Corrientes, brigadistas, bosque quemado).
+6. **Menos texto por parada:** encabezado + una cifra + una línea. Tucumán conserva una sola nota gris (línea de base 69 %); sale «Quemar está prohibido (Ley 6253)». Comarca: sale «2025: 166 casas perdidas y 1 muerto» (el titular de Infobae cuenta la víctima).
+7. **Tarjeta de fuentes** (9 líneas): suma Clarín, La Nación, Infobae, La Gaceta, las 3 fotos con autor y licencia, Sentinel-2 y las banderas CC BY (Chubut, Río Negro). Sale la línea de la Ley 26.815 (iba con el 911).
+
+| Tiempo (s) | Imagen / cámara | Texto en pantalla | Música |
+|---|---|---|---|
+| 0,0–7,9 | Igual que v7: Sol → rayos → Tierra → Argentina; calor; la chispa | gancho «¿DÓNDE ARDE / ARGENTINA?» (0,45) · «EL SOL CALIENTA.» · **«LA CHISPA ES HUMANA.»** · «EN 9 DE CADA 10 INCENDIOS CON CAUSA CONOCIDA» · gris «Ministerio de Ambiente, 1993–2019» | igual v7 |
+| 7,9–14,4 | 14 años de focos VIIRS; año y curva mensual | «¿DÓNDE ARDE / ARGENTINA?» → **2.550.467** FOCOS / «EN 14 AÑOS · 2012–2025» | golpe, tambores, braam |
+| 14,4–18,6 | Ceniza → cicatriz MODIS; 16,4–18,5 cicatriz Corrientes 2022 resaltada | «ARDIÓ AL MENOS UNA VEZ · MODIS 2012–2025» / **26,6 MILLONES** DE HA / «= CASI 1 DE CADA 10 HECTÁREAS DEL PAÍS» · titular **La Nación 15/02/2022** «Tragedia ecológica en Corrientes: los incendios llegaron a los Esteros del Iberá…» (pin Iberá) | boom, braam; tic de papel |
+| 18,6–26,7 | Ranking: 24 jurisdicciones → top 5 | igual v7 (top 5 en blanco; Corrientes ya no en ámbar) / «5 PROVINCIAS = 53 % DE TODO LO QUEMADO» | ticks, hit |
+| 26,5–27,7 | Zoom directo a Tucumán | — | whoosh |
+| 27,7–32,0 | **Tucumán**: zona cañera; focos de la zafra; país contorneado | [bandera] «TUCUMÁN · ZAFRA DE CAÑA (MAY–NOV) · 2012–2025» / **89 %** DE SUS FOCOS / «EN LA ZONA CAÑERA, EN PLENA ZAFRA» / gris «Esos departamentos = 69 % de la provincia» · 29,7 titular **La Gaceta 28/06/2025** «Choques, humo y gritos: el horror en la autopista a Famaillá» | hit, tambores |
+| 32,0–33,6 | **Corte a foto**: cañaveral ardiendo | «ASÍ ARDE UN CAÑAVERAL.» / gris «Quema de caña antes de la cosecha · foto: Queensland, Australia» | impacto + rugido de fuego |
+| 33,2–34,2 | Vuelo Tucumán → Delta (bajo la salida de la foto) | — | whoosh |
+| 34,2–38,5 | **Entre Ríos 2020**: focos del año, cicatriz MODIS 2020 resaltada | [bandera] «ENTRE RÍOS · ISLAS DEL DELTA · 2020» / **37.506** FOCOS (cuenta) / «CASI 7 VECES SU MEDIANA 2012–2025» · 36,1 titular **Clarín 27/07/2020** «Rosario irrespirable por el humo…» (pin Rosario) | hit, tambores |
+| 38,5–40,1 | **Corte a foto**: brigadista en el pastizal del Delta | «ASÍ ARDE UN PASTIZAL.» / gris «Islas del Delta del Paraná · 2020» | impacto + rugido |
+| 39,7–41,0 | Vuelo Delta → cordillera | — | whoosh, swell |
+| 41,0–45,9 | **Comarca Andina**: Sentinel-2 dic-2024 → abr-2025 (41,7) → abr-2026 (42,8); cicatrices 2025 (42,1) / 2026 (43,3) | [banderas] «COMARCA ANDINA · CHUBUT Y RÍO NEGRO» / **42.000** HA EN 2026 (cuenta) / «7 VECES MÁS QUE EN 2025» · 43,6 titular **Infobae 01/02/2025** «Un hombre murió en los incendios en El Bolsón y el fuego sigue avanzando» | drop, coro, tambores |
+| 45,9–47,5 | **Corte a foto**: incendio forestal en Puerto Patriada | «ASÍ ARDE UN BOSQUE.» / [bandera Chubut] gris «Puerto Patriada, Chubut · enero de 2026» | impacto + rugido |
+| 47,1–48,7 | Zoom out al país entero | — | redoble |
+| 48,3–53,9 | **Cierre**: 24 jurisdicciones encendidas; todos los focos 2012–2025 se acumulan sobre la cicatriz MODIS | 48,6 «TODO LO QUE ARDIÓ · 2012–2025» / gris «Focos VIIRS + área quemada MODIS» · 50,47 **«YA NO FALTAN DATOS.»** / 50,72 **«FALTA RESPONSABILIDAD.»** | swell; silencio 50,2–50,47; boom, taiko, braam, campana |
+| 53,9–59,47 | Tarjeta de FUENTES (9 líneas) | ver sources.md | decrescendo |
+
+Texto mínimo: 36 px (encabezados mono, leyendas, fecha/medio de los titulares); citas de titulares 40 px; notas grises y fuentes 40 px. Filas del barrido del ranking 28 px (pasan rápido a propósito; el top 5 va a 64 px).
+
+---
+
 # v7 — «¿Dónde arde Argentina?» (Historia visual, 59,77 s, 1080p30)
 
 **v7 = v6 + revisión crítica (13-10-2026):**

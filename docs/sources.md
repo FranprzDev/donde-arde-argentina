@@ -1,4 +1,70 @@
-# Fuentes y verificación de cada número en pantalla — v7 «¿Dónde arde Argentina?»
+# Fuentes y verificación de cada número en pantalla — v8 «¿Dónde arde Argentina?»
+
+Cadena de datos sin cambios respecto de v7 (`prep_*.py` → `data/*.json` → `render_v8.py`, con un `assert` por cada cifra y redondeo; `python3 render_v8.py --nums` las imprime). v8 no agrega ninguna cifra nueva: las de Entre Ríos ya estaban calculadas y verificadas desde v3–v5 (`data/stats_v4.json`). Consultas: 12/13-10-2026.
+
+## Novedades v8 (13-10-2026)
+
+**Estructura:** mapa nacional (focos, 26,6 M ha, ranking) → 3 paradas «mapa → foto real»: Tucumán (caña), Entre Ríos / Delta 2020 (pastizal), Comarca Andina (bosque) → cierre con el país entero y todo lo quemado.
+
+**Cifras en pantalla en v8** (todas con `assert`):
+
+| Pantalla v8 | Valor exacto | Cálculo / fuente |
+|---|---|---|
+| «2.550.467 FOCOS» | 2.550.467 | FIRMS VIIRS 2012–2025 (1) |
+| «26,6 MILLONES DE HA» / «CASI 1 DE CADA 10 HECTÁREAS DEL PAÍS» | 26.642.264 ha; 9,53 % | MODIS, ardió al menos una vez (2)+(3) — ver v7 |
+| Ranking top 5 / «53 %» | ver v7 | `data/ranking_v7.json` |
+| «TUCUMÁN · … 89 % DE SUS FOCOS» / gris «Esos departamentos = 69 % de la provincia» | 89,2 % (53.625 / 60.136); 69,5 % | ver v4/v7 (4) |
+| **«ENTRE RÍOS · ISLAS DEL DELTA · 2020» / «37.506 FOCOS»** | 37.506 | focos VIIRS 2020 dentro de Entre Ríos (INDEC); el render verifica además que la cantidad de puntos animados = 37.506 (`assert len(EV_ER) == ER_N`) (1)+(3) |
+| **«CASI 7 VECES SU MEDIANA 2012–2025»** | 6,96 | 37.506 / mediana de los otros 13 años 2012–2025 (5.391 focos); se muestra la referencia más larga y conservadora (con 2012–2019 daría 10,8×) (1)+(3) |
+| «COMARCA ANDINA · 42.000 HA EN 2026» / «7 VECES MÁS QUE EN 2025» | 42.266 ha; 7,01 | MODIS ene–mar, caja de la Comarca (2) |
+| Cierre «TODO LO QUE ARDIÓ · 2012–2025» | — | sin cifra: cicatriz MODIS 2012–2025 (`assets/scar_all.npz`, de `data/scar_count.npy`, sólo meses ≤ 2025) + los 2.550.467 focos VIIRS 2012–2025 |
+
+**Salieron de pantalla en v8:** «SABEMOS DÓNDE Y CUÁNDO ARDE.» y su nota «Norte: ago–sep · Cordillera: dic–mar» (cifras de respaldo abajo, sin cambios), «NO QUEMES. SI VES FUEGO, LLAMÁ AL 911.» y la línea «Avisar es obligatorio (Ley 26.815)», la parada Corrientes («CASI 1 MILLÓN DE HA», «MÁS DE 46 CIUDADES DE BUENOS AIRES»; siguen verificadas abajo), «2025: 166 CASAS PERDIDAS Y 1 MUERTO», «Quemar está prohibido (Ley 6253)», y las 3 fotos chicas de v7 (Landsat 9 Corrientes, brigadistas santafesinos, «Restos de incendios»).
+
+**Por qué Entre Ríos / Delta como parada de pastizal (y no Corrientes o La Pampa):** es la única de las tres con foto abierta (CC BY 4.0) de un pastizal ardiendo tomada en el mismo lugar y año que los datos (Delta del Paraná, 2020), cifra fuerte y propia (37.506 focos, casi 7 veces su mediana) y un titular verificado sobre el mismo evento (Clarín, «8 mil quemas de pastizales en las islas de Entre Ríos»). Corrientes 2022 sólo tenía imagen satelital (Landsat), y La Pampa no tenía foto ni titular.
+
+### Titulares en pantalla (citas textuales re-tipografiadas, sin capturas ni logos; art. 10, Ley 11.723)
+
+| Momento | Medio · fecha | Se muestra | Titular completo | URL |
+|---|---|---|---|---|
+| Cicatriz nacional (16,4–18,5 s), pin Esteros del Iberá; cicatriz Corrientes ene–feb 2022 resaltada | La Nación · 15/02/2022 | «Tragedia ecológica en Corrientes: los incendios llegaron a los Esteros del Iberá…» | «… y amenazan su amplia biodiversidad» | https://www.lanacion.com.ar/sociedad/tragedia-ecologica-en-corrientes-los-incendios-llegaron-a-los-esteros-del-ibera-y-amenazan-su-amplia-nid15022022/ |
+| Tucumán (29,7–31,9 s), pin autopista a Famaillá | La Gaceta · 28/06/2025 | completo | «Choques, humo y gritos: el horror en la autopista a Famaillá» | https://www.lagaceta.com.ar/nota/1090058/seguridad/choques-humo-gritos-horror-autopista-famailla.html |
+| Entre Ríos (36,1–38,4 s), pin Rosario | Clarín · 27/07/2020 | «Rosario irrespirable por el humo…» | «… en el año detectaron 8 mil quemas de pastizales en las islas de Entre Ríos» | https://www.clarin.com/sociedad/rosario-irrespirable-humo-ano-detectaron-8-mil-quemas-pastizales-islas-rios_0_D3R6eQaiM.html |
+| Comarca (43,6–45,8 s), pin El Bolsón | Infobae · 01/02/2025 | completo | «Un hombre murió en los incendios en El Bolsón y el fuego sigue avanzando» | https://www.infobae.com/sociedad/2025/02/02/un-hombre-murio-en-los-incendios-en-el-bolson-y-el-fuego-sigue-avanzando/ |
+
+Tarjetas: `assets/hl_0..hl_3.png` (generadas por `prep_assets.py` de v4: medio + fecha en mono 36 px, cita en Inter 40 px). Datos: `headlines/selected.json`.
+
+### Fotos en pantalla (corte a pantalla completa, 1,6 s cada una) — `photos/v8/credits.json`
+
+| Momento | Archivo (Wikimedia Commons) | Autor | Licencia | Pie en pantalla | URL |
+|---|---|---|---|---|---|
+| Tras Tucumán | Cane fire in the Burdekin.jpg (09-08-2009) | cytoon (Flickr) | CC BY 2.0 | «Quema de caña antes de la cosecha · foto: Queensland, Australia» | https://commons.wikimedia.org/wiki/File:Cane_fire_in_the_Burdekin.jpg |
+| Tras Entre Ríos | Incendio en delta del paraná 2020 - Parques Nacionales.jpg (01-08-2020) | Ministerio de Ambiente de la Nación (argentina.gob.ar/ambiente/conciencia-ambiental/incendios-delta) | CC BY 4.0 | «Islas del Delta del Paraná · 2020» | https://commons.wikimedia.org/wiki/File:Incendio_en_delta_del_paran%C3%A1_2020_-_Parques_Nacionales.jpg |
+| Tras la Comarca | Foco de incendio 2.jpg (25-01-2026; «incendio forestal de interfase activo en la zona de Puerto Patriada») | CatrielGB | CC BY-SA 4.0 | «Puerto Patriada, Chubut · enero de 2026» + bandera del Chubut | https://commons.wikimedia.org/wiki/File:Foco_de_incendio_2.jpg |
+
+- **Caña:** se buscó en Commons una quema de caña en Tucumán/Argentina con licencia abierta («quema de caña», «zafra Tucumán», «cañaveral fuego», «quema cañaveral», etc.): no hay. Se eligió la mejor CC BY (sin personas identificables) y el pie declara el lugar real (Australia) para no sugerir que es Tucumán. Alternativas CC BY descartadas: CSIRO ScienceImage 1559 (persona en primer plano), «Cane fire in Australia» (persona), «Burning sugar cane field in Queensland a» (sólo humo).
+- **Bosque:** no se encontró foto DP ni CC BY de un incendio forestal activo en la Comarca 2025–2026 (búsqueda ya documentada en v4); se usa CC BY-SA 4.0 con atribución. La brigadista del Delta está de espaldas; ninguna foto muestra caras identificables. Ninguna imagen es generada por IA.
+- **Recorte:** sólo encuadre 16:9 y un oscurecido inferior para el texto; sin otra manipulación.
+
+### Banderas (cada vez que se muestra una provincia en una parada)
+Tucumán (DP), Entre Ríos (DP), Chubut (CC BY 4.0, Roxana Vanesa Jones / Gobierno del Chubut), Río Negro (CC BY 4.0, orig. Daniel Cuomo, vector Hellerick); Wikimedia Commons, ver `flags/flags.json`. Bandera del Chubut también en el pie de la foto de Puerto Patriada.
+
+### Tarjeta de fuentes v8 (texto exacto, 9 líneas)
+1. Focos: NASA FIRMS, VIIRS S-NPP 375 m, 2012–2025. Un foco no es un incendio.
+2. Área quemada: MODIS MCD64A1 C6.1, 500 m (NASA, UMD); cada píxel cuenta una vez.
+3. Causas 1993–2019: Min. de Ambiente. Caña: EEAOC. Límites: INDEC, IGN. País: 279,5 M ha.
+4. Titulares (citas textuales): Clarín 27/07/2020 · La Nación 15/02/2022 ·
+5. Infobae 01/02/2025 · La Gaceta 28/06/2025. Satélite: Copernicus Sentinel-2 (2024–2026).
+6. Fotos (Wikimedia Commons): cañaveral, cytoon/Flickr (CC BY 2.0); pastizal, Ministerio
+7. de Ambiente (CC BY 4.0); bosque, CatrielGB (CC BY-SA 4.0).
+8. Banderas: Wikimedia Commons (DP; CC BY 4.0: Chubut, R. V. Jones / Gob. del Chubut;
+9. Río Negro, D. Cuomo y Hellerick). Sol, Tierra, mapas, animación y música: con código.
+
+Los nombres que aparecen son sólo los créditos que exigen las licencias (fotógrafos y autores de banderas); el autor del video no aparece en pantalla (regla de seudónimo).
+
+---
+
+## (v7 y anteriores — respaldo)
 
 Ningún número está tipeado a mano en el render. Cadena: `../prep_data.py` → `../data/points.npz`; `causas.py` + `prep_v2.py` → `data/stats_v2.json`; `burn/fetch_umd.py` → `burn/umd/*.npz` → `prep_burn.py` → `data/burn_stats.json` + rásters; `prep_tucuman.py` → `data/tucuman_stats.json`; `prep_v4.py` junta todo en `data/stats_v4.json`; `prep_v7.py` → `data/ranking_v7.json` (ranking provincial, v7: superficie distinta); `render_v7.py` lee todo y tiene un `assert` por cada redondeo verbal («casi», «más de») y por cada valor del ranking. `python3 render_v7.py --nums` imprime todos. Única excepción: cifras humanas de la Patagonia (casas, muerto, ha oficiales de 2026), que no salen de un dataset: están en `data/patagonia_facts.json` con su URL y cita textual. Consultas: 12/13-10-2026.
 
@@ -93,7 +159,7 @@ Focos (FIRMS VIIRS) · Área quemada (MCD64A1 C6.1, UMD) · Ranking (área quema
 | | «NO QUEMES. SI VES FUEGO, LLAMÁ AL 911.» | — | 911: «Ante cualquier situación de emergencia, comunicate de inmediato con la Protección Civil local o llamá al 911» (https://www.argentina.gob.ar/seguridad/emergencias). Ley 26.815, art. 16: toda persona que conozca un incendio «está obligada a formular de inmediato la denuncia ante la autoridad más cercana» | oficial |
 | Fuentes | «Cancha FIFA 105 × 68 m = 0,714 ha. Capital: límite IGN, 20.562 ha.» | | calculado en `prep_burn.py` | |
 
-## Titulares (v4/v5; **no se usan en v6**) (4; citas textuales re-tipografiadas, sin capturas ni logos; art. 10, Ley 11.723)
+## Titulares (v4/v5; no se usan en v6–v7; **vuelven en v8**, ver arriba) (4; citas textuales re-tipografiadas, sin capturas ni logos; art. 10, Ley 11.723)
 Cada uno se verificó contra el `og:title`/`<h1>` de la página (`headlines/fetched.json`; assert en el script de verificación). Cuando se muestra un fragmento, es un prefijo textual con «…».
 | Parada | Medio · fecha | Titular completo | Se muestra | URL |
 |---|---|---|---|---|

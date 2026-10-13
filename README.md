@@ -35,8 +35,8 @@ pipeline/prep_burn.py        # área quemada por provincia, cicatrices
 pipeline/causas.py           # causas (Min. Ambiente)
 pipeline/prep_tucuman.py     # focos en la zona cañera durante la zafra
 pipeline/prep_v2.py, prep_v4.py, prep_v7.py   # estadísticas y ranking provincial
-pipeline/render_v7.py --nums # imprime todos los números que salen en pantalla
-pipeline/build_v7.sh         # render de cuadros en paralelo + música + armado
+pipeline/v8/render_v8.py # (v8, versión actual) imprime todos los números que salen en pantalla
+pipeline/v8/build_v8.sh      # render de cuadros en paralelo + música + armado
 ```
 
 Requisitos: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
