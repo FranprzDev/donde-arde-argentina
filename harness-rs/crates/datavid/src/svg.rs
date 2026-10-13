@@ -164,6 +164,21 @@ impl Svg {
     }
 }
 
+/// `content` with its own bloom (σ 10 + 36 px, the `#bloom` preset) screened on top at `bloom_opacity`, drawn in ONE pass.
+///
+/// Same picture as `<g style="isolation:isolate">{content}</g><g filter="url(#bloom)" opacity="k"
+/// style="mix-blend-mode:screen">{content}</g>`, but the renderer rasterises `content` once instead of twice: the filter
+/// blurs it, scales the bloom's alpha by `k` (what group opacity does) and screens it over the sharp copy (`feBlend`).
+/// For layers made of dozens of screened rasters (the fire timelapse, the closing embers) this halves the image draws.
+/// Results match the two-group form up to 8-bit rounding.
+pub fn bloom_screen(content: &str, bloom_opacity: f64, w: f64, h: f64) -> String {
+    let k = op(bloom_opacity);
+    let id = format!("bs{}", (k * 1e4).round() as u32);
+    format!(
+        r#"<filter id="{id}" filterUnits="userSpaceOnUse" x="0" y="0" width="{w}" height="{h}" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="a"/><feGaussianBlur in="SourceGraphic" stdDeviation="36" result="b"/><feComposite in="a" in2="b" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="bl"/><feComponentTransfer in="bl" result="bk"><feFuncA type="linear" slope="{k}" intercept="0"/></feComponentTransfer><feBlend in="bk" in2="SourceGraphic" mode="screen"/></filter><g filter="url(#{id})">{content}</g>"#
+    )
+}
+
 /// blur radii available as `filter="url(#bN)"`
 pub const BLURS: [u32; 9] = [2, 3, 4, 6, 8, 12, 16, 24, 32];
 pub fn blur_id(sigma: f64) -> u32 {

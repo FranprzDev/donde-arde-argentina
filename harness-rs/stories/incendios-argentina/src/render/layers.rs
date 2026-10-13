@@ -328,7 +328,7 @@ impl Incendios {
         }
         if !f.is_empty() && ash_k < 1.0 {
             let bloom_k = 0.9 * (1.0 + 0.6 * decay(t, tl.t_a1, 0.9));
-            let _ = write!(s, r#"<g opacity="{}" style="mix-blend-mode:screen"><g style="isolation:isolate">{f}</g><g filter="url(#bloom)" opacity="{}" style="mix-blend-mode:screen">{f}</g></g>"#, op(1.0 - ash_k), op(bloom_k / 1.5));
+            let _ = write!(s, r#"<g opacity="{}" style="mix-blend-mode:screen">{}</g>"#, op(1.0 - ash_k), svg::bloom_screen(&f, bloom_k / 1.5, W, H));
         }
     }
 
@@ -515,7 +515,7 @@ impl Incendios {
         let a = clamp((t - tl.t_cl + 0.6) / 0.6) * (1.0 - 0.35 * clamp((t - tl.t_src) / 0.5));
         let img = self.geo_image(&format!("acc_{q:02}.png"), self.a.grid_bbox, c, a, "screen", false);
         let bk = 0.7 * (1.0 + 0.5 * decay(t, tl.t_cl + 1.6, 0.8));
-        let _ = write!(s, r#"<g style="mix-blend-mode:screen">{img}<g filter="url(#bloom)" opacity="{}" style="mix-blend-mode:screen">{img}</g></g>"#, op(bk / 1.4));
+        let _ = write!(s, r#"<g style="mix-blend-mode:screen">{}</g>"#, svg::bloom_screen(&img, bk / 1.4, W, H));
     }
 
     /// the rest of the country dims around the stop province (Tucumán, Entre Ríos)
