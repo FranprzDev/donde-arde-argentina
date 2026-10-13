@@ -346,11 +346,14 @@ impl Incendios {
         let kw = 0.5 * decay(t, tl.t_scar, 0.8);
         // pyramid level: ~1 texel per screen pixel
         let texel = (1.0 / (c[2] * COS)) / crate::prep::modis::D;
-        let lv = if texel < 4.0 { 1 } else { 3 };
-        let bb = self.a.scar_levels.iter().find(|l| l.0 == lv).unwrap().1;
-        s.push_str(&self.geo_image(&format!("scar_dark_l{lv}.png"), bb, c, sk, "", false));
-        s.push_str(&self.geo_image(&format!("scar_col_l{lv}.png"), bb, c, sk * dimk * (1.0 - kw), "screen", false));
-        s.push_str(&self.geo_image(&format!("scar_warm_l{lv}.png"), bb, c, sk * dimk * kw, "screen", false));
+        // the fine crop that holds the whole view, else the national level
+        let (vx0, vy1) = (c[0] - (c[3] + 40.0) / (c[2] * COS), c[1] + (c[4] + 40.0) / c[2]);
+        let (vx1, vy0) = (c[0] + (W - c[3] + 40.0) / (c[2] * COS), c[1] - (H - c[4] + 40.0) / c[2]);
+        let fine = if texel < 4.0 { self.a.scar_levels.iter().find(|l| l.0.starts_with("l1") && l.1[0] <= vx0 && l.1[2] >= vx1 && l.1[1] <= vy0 && l.1[3] >= vy1) } else { None };
+        let (lv, bb) = fine.or_else(|| self.a.scar_levels.iter().find(|l| l.0 == "l3")).map(|l| (l.0.clone(), l.1)).unwrap();
+        s.push_str(&self.geo_image(&format!("scar_dark_{lv}.png"), bb, c, sk, "", false));
+        s.push_str(&self.geo_image(&format!("scar_col_{lv}.png"), bb, c, sk * dimk * (1.0 - kw), "screen", false));
+        s.push_str(&self.geo_image(&format!("scar_warm_{lv}.png"), bb, c, sk * dimk * kw, "screen", false));
         let w = self.stop_w(t, 1);
         if w > 0.003 {
             let eb = self.a.events["er2020"];

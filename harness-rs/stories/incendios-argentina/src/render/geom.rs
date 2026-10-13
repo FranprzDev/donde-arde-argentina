@@ -80,7 +80,7 @@ pub struct AssetMeta {
     pub grid_bbox: [f64; 4],
     pub fresh: Vec<Fresh>,
     pub ember_q: Vec<usize>,
-    pub scar_levels: Vec<(usize, [f64; 4])>,
+    pub scar_levels: Vec<(String, [f64; 4])>,
     pub events: HashMap<String, [f64; 4]>,
     pub sun_r: f64,
     pub sun_half: f64,
@@ -106,7 +106,7 @@ impl AssetMeta {
                 .map(|f| Fresh { m: f["m"].as_u64().unwrap() as usize, bbox: b4(&f["bbox"]), median_month: f["median_month"].as_f64().unwrap() })
                 .collect(),
             ember_q: a["ember_q"].as_array().unwrap().iter().map(|v| v.as_u64().unwrap() as usize).collect(),
-            scar_levels: a["scar_levels"].as_array().unwrap().iter().map(|l| (l["level"].as_u64().unwrap() as usize, b4(&l["bbox"]))).collect(),
+            scar_levels: a["scar_levels"].as_array().unwrap().iter().map(|l| (if l["level"] == 1 { format!("l1_{}", l["stop"]) } else { "l3".to_string() }, b4(&l["bbox"]))).collect(),
             events: a["events"].as_object().unwrap().iter().map(|(k, v)| (k.clone(), b4(v))).collect(),
             sun_r: a["sun"]["r"].as_f64().unwrap(),
             sun_half: a["sun"]["half"].as_f64().unwrap(),

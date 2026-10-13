@@ -196,15 +196,32 @@ pub fn run(story: &Story, _facts: &Facts) -> Result<()> {
     let inten = Img::from(g.w, g.h, cnt.iter().map(|&c| if c > 0 { 110.0 + 145.0 * (((c as f32 - 1.0).ln_1p()) / 7f32.ln_1p()).clamp(0.0, 1.0) } else { 0.0 }).collect());
     let mut lev = inten;
     let mut scar_levels = vec![];
+    let save_scar = |name: &str, im: &Img| -> Result<()> {
+        let s55: Vec<f32> = im.px.iter().map(|v| (v / 255.0).clamp(0.0, 1.0).powf(0.55)).collect();
+        save_dark(&out, &format!("scar_dark_{name}"), im.w, im.h, &s55.iter().map(|s| 0.6 * s).collect::<Vec<_>>())?;
+        save_light(&out, &format!("scar_col_{name}"), im.w, im.h, &s55.iter().map(|s| [s * 205.0, s * 190.0, s * 172.0]).collect::<Vec<_>>())?;
+        save_light(&out, &format!("scar_warm_{name}"), im.w, im.h, &s55.iter().map(|s| [s * 235.0, s * 110.0, s * 45.0]).collect::<Vec<_>>())
+    };
     for k in 1..=3 {
         lev = datavid::raster::shrink(&lev, 2);
-        if k == 1 || k == 3 {
-            let dk = g.d * (g.w as f64 / lev.w as f64);
-            let s55: Vec<f32> = lev.px.iter().map(|v| (v / 255.0).clamp(0.0, 1.0).powf(0.55)).collect();
-            save_dark(&out, &format!("scar_dark_l{k}"), lev.w, lev.h, &s55.iter().map(|s| 0.6 * s).collect::<Vec<_>>())?;
-            save_light(&out, &format!("scar_col_l{k}"), lev.w, lev.h, &s55.iter().map(|s| [s * 205.0, s * 190.0, s * 172.0]).collect::<Vec<_>>())?;
-            save_light(&out, &format!("scar_warm_l{k}"), lev.w, lev.h, &s55.iter().map(|s| [s * 235.0, s * 110.0, s * 45.0]).collect::<Vec<_>>())?;
-            scar_levels.push(json!({"level": k, "bbox": [g.lon0, g.lat1 - lev.h as f64 * dk, g.lon0 + lev.w as f64 * dk, g.lat1]}));
+        let dk = g.d * (g.w as f64 / lev.w as f64);
+        if k == 1 {
+            // the fine level only where the camera zooms in (the three stops), to keep the preloaded media small
+            for (i, c) in crate::timeline::STOPCAM.iter().enumerate() {
+                let (hw, hh) = (1.3 * 1920.0 / (c[2] * COS), 1.3 * 1080.0 / c[2]);
+                let (lo0, lo1, la0, la1) = (c[0] - hw, c[0] + hw, c[1] - hh, c[1] + hh);
+                let x0 = (((lo0 - g.lon0) / dk).floor().max(0.0)) as usize;
+                let x1 = (((lo1 - g.lon0) / dk).ceil() as usize).min(lev.w);
+                let y0 = (((g.lat1 - la1) / dk).floor().max(0.0)) as usize;
+                let y1 = (((g.lat1 - la0) / dk).ceil() as usize).min(lev.h);
+                let crop = lev.crop(x0, y0, x1, y1);
+                save_scar(&format!("l1_{i}"), &crop)?;
+                scar_levels.push(json!({"level": 1, "stop": i, "bbox": [g.lon0 + x0 as f64 * dk, g.lat1 - y1 as f64 * dk, g.lon0 + x1 as f64 * dk, g.lat1 - y0 as f64 * dk]}));
+            }
+        }
+        if k == 3 {
+            save_scar("l3", &lev)?;
+            scar_levels.push(json!({"level": 3, "stop": -1, "bbox": [g.lon0, g.lat1 - lev.h as f64 * dk, g.lon0 + lev.w as f64 * dk, g.lat1]}));
         }
     }
     eprintln!("assets: scar {:.1}s", t0.elapsed().as_secs_f64());
