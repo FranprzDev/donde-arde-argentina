@@ -1,62 +1,62 @@
-# Guía de estilo visual
+# Visual style guide
 
-El lenguaje visual por defecto (todo configurable en `theme:` del `story.yaml`).
+The default visual language (everything is configurable under `theme:` in `story.yaml`).
 
-## Principios
+## Principles
 
-1. **Una sola visualización que se transforma.** Un mapa continuo: la cámara vuela, hace zoom, entra a una imagen
-   satelital y vuelve. Nada de cortes a diapositivas.
-2. **Una idea por escena.** Un número grande, una línea corta. Si hace falta explicar, es otra escena.
-3. **El dato es la luz.** Fondo casi negro; lo único brillante es el dato (puntos, áreas, el número). El resto es contexto apagado.
-4. **Escala humana y líneas de base.** «el doble que hace diez años», «3 de cada 10»: comparaciones que se entienden sin ejes.
-5. **Legible en un celular**, en la primera vista, sin pausar (las reglas del harness lo garantizan).
+1. **A single visualization that transforms.** One continuous map: the camera flies, zooms, dives into a satellite
+   image and comes back. No cuts to slides.
+2. **One idea per scene.** One big number, one short line. If it needs explaining, it is another scene.
+3. **The data is the light.** Near-black background; the only bright thing is the data (points, areas, the number). Everything else is muted context.
+4. **Human scale and baselines.** "twice as much as ten years ago", "3 in 10": comparisons that make sense without axes.
+5. **Readable on a phone**, on first viewing, without pausing (the harness rules guarantee it).
 
 ## Color
 
-| Rol | Clave de paleta | Valor por defecto | Uso |
+| Role | Palette key | Default value | Use |
 |---|---|---|---|
-| Fondo | `bg` | `#060609` | todo el fondo |
-| Tierra | `land` | `#141316` | regiones del mapa |
-| Vecinos | `neighbour` | `#0D0D11` | contexto fuera del área |
-| Bordes | `border` | `#3E3C40` | límites, finos |
-| Texto | `text` | `#F2F0EC` | titulares, números neutros |
-| Texto secundario | `muted` | `#BEB6AC` | leyendas, fuentes |
-| Acento | `accent` | `#FF6E1E` | la palabra clave, la segunda línea del título |
-| Acento 2 | `accent2` | `#FFB03C` | encabezados mono, contornos resaltados, sublíneas |
-| Caliente | `hot` | `#FFE2A0` | el número protagonista, contornos que brillan |
-| Rojo | `red` | `#FF4028` | lo más grave / lo más reciente |
-| Ceniza | `ash` | `#968E86` | áreas afectadas, lo que ya pasó |
+| Background | `bg` | `#060609` | the whole background |
+| Land | `land` | `#141316` | map regions |
+| Neighbours | `neighbour` | `#0D0D11` | context outside the area |
+| Borders | `border` | `#3E3C40` | boundaries, thin |
+| Text | `text` | `#F2F0EC` | headlines, neutral numbers |
+| Secondary text | `muted` | `#BEB6AC` | legends, sources |
+| Accent | `accent` | `#FF6E1E` | the key word, the title's second line |
+| Accent 2 | `accent2` | `#FFB03C` | mono headers, highlighted outlines, sublines |
+| Hot | `hot` | `#FFE2A0` | the hero number, glowing outlines |
+| Red | `red` | `#FF4028` | the most severe / most recent |
+| Ash | `ash` | `#968E86` | affected areas, what already happened |
 
-Rampa de datos (`lut`): negro → bordó → naranja → ámbar → blanco cálido. Puntos y coropletas usan esa rampa;
-cuanto más dato, más blanco. Para otros temas (agua, frío), cambiá `accent*` y `lut` a azules, manteniendo el contraste.
+Data ramp (`lut`): black → maroon → orange → amber → warm white. Points and choropleths use that ramp;
+the more data, the whiter. For other topics (water, cold), switch `accent*` and `lut` to blues, keeping the contrast.
 
-## Tipografía
+## Typography
 
-| Rol | Fuente (OFL, incluida) | Tamaño (px a 1080p) |
+| Role | Font (OFL, included) | Size (px at 1080p) |
 |---|---|---|
-| Titular / números | **Anton** (condensada, mayúsculas) | número 150 · titular 116–132 · cierre 110–124 · sublínea 66 · unidad 80 |
-| Encabezados de escena | **JetBrains Mono** 800 | 52 |
-| Leyendas, fuentes, rótulos | **Inter** 500–600 | 48 (mínimo absoluto) |
+| Headline / numbers | **Anton** (condensed, uppercase) | number 150 · headline 116–132 · closing 110–124 · subline 66 · unit 80 |
+| Scene headers | **JetBrains Mono** 800 | 52 |
+| Legends, sources, labels | **Inter** 500–600 | 48 (absolute minimum) |
 
-- Todo en el tercio izquierdo (x = 110 px); el mapa vive a la derecha. Una sombra suave oscurece la zona de texto.
-- Mayúsculas para titulares y números; oración normal para fuentes y leyendas.
-- Números en formato local (`es`: 12.345 · 12,5).
+- Everything in the left third (x = 110 px); the map lives on the right. A soft shadow darkens the text area.
+- Uppercase for headlines and numbers; sentence case for sources and legends.
+- Numbers in local format (`es`: 12.345 · 12,5).
 
-## Movimiento
+## Motion
 
-- **Slam**: el texto entra grande (×1,45) y cae a su tamaño en ~0,28 s con un destello de glow; sale con un fade y un leve ascenso.
-- **Números que cuentan** (`count_to`) aterrizan exactamente en el valor redondeado.
-- **Cámara**: `zoomto` para acercarse a una región, `fly` entre regiones (baja el zoom lo justo para que se vean ambos extremos), `ease` para ajustes suaves.
-- **Flash + golpe** en cada revelación importante; temblor (`shake`) solo en 2–3 momentos.
-- **Glow/bloom** en datos y títulos clave; viñeta y grano de película fijos.
+- **Slam**: text enters large (×1.45) and drops to its size in ~0.28 s with a glow flash; it exits with a fade and a slight rise.
+- **Counting numbers** (`count_to`) land exactly on the rounded value.
+- **Camera**: `zoomto` to approach a region, `fly` between regions (zooms out just enough for both ends to be visible), `ease` for gentle adjustments.
+- **Flash + hit** on each important reveal; shake (`shake`) only at 2–3 moments.
+- **Glow/bloom** on data and key titles; fixed vignette and film grain.
 
-## Sonido
+## Sound
 
-Drone grave + pads en loop, golpes (boom/taiko/braam) en cada revelación, whoosh en cada movimiento de cámara, tics por
-año/región, un silencio corto antes de la frase de cierre. −14 LUFS.
+Low drone + looping pads, hits (boom/taiko/braam) on each reveal, a whoosh on each camera move, ticks per
+year/region, a short silence before the closing line. −14 LUFS.
 
-## Qué evitar
+## What to avoid
 
-- Más de ~12 palabras en pantalla a la vez, texto < 48 px, textos que duran menos de lo que se tarda en leerlos.
-- Leyendas que no se explican («1 punto = 1 sismo» sí; un punto sin leyenda no).
-- Fotos de stock, íconos decorativos, imágenes generadas por IA.
+- More than ~12 words on screen at once, text < 48 px, text that stays on screen less time than it takes to read.
+- Legends that do not explain themselves («1 punto = 1 sismo» / "1 dot = 1 earthquake" yes; an unexplained dot no).
+- Stock photos, decorative icons, AI-generated images.

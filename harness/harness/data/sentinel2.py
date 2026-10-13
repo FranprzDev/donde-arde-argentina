@@ -8,7 +8,8 @@ to EPSG:4326, and writes NAME.jpg + NAME.json (bbox, date, tile ids, cloud cover
 
   python -m harness.data.sentinel2 --search --bbox ... --from 2025-09-01 --to 2025-09-30   # list dates + cloud cover
 
-Credit on screen: "Contiene datos Copernicus Sentinel-2 modificados (AÑO)"."""
+Credit on screen: "Contains modified Copernicus Sentinel-2 data (YEAR)"; on a Spanish-language screen:
+"Contiene datos Copernicus Sentinel-2 modificados (AÑO)"."""
 import argparse
 import json
 import sys

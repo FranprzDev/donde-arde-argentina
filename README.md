@@ -1,79 +1,79 @@
-# ¿Dónde arde Argentina?
+# ¿Dónde arde Argentina? (Where is Argentina burning?)
 
-Código, datos y documentación del video de visualización de datos «¿Dónde arde Argentina?» (focos de calor y área quemada en la Argentina, 2012–2025).
+Code, data and documentation for the data-visualization video «¿Dónde arde Argentina?» (fire hotspots and burned area in Argentina, 2012–2025). The video itself is in Spanish.
 
-Todo lo que aparece en el video se genera con código a partir de datos abiertos: el mapa, la animación, los números y la música. No hay imágenes generadas por IA. Este repositorio existe para que cualquiera pueda verificar cada cifra y reproducir el video.
+Everything in the video is generated with code from open data: the map, the animation, the numbers and the music. There are no AI-generated images. This repository exists so anyone can verify every figure and reproduce the video.
 
-## Qué hay acá
+## What is here
 
-| Carpeta | Contenido |
+| Folder | Contents |
 |---|---|
-| `pipeline/` | Scripts de descarga, procesamiento, render de cuadros, música y armado final |
-| `data/` | Datos procesados chicos (CSV, JSON, GeoJSON) y estadísticas que lee el render |
-| `docs/` | Guion con tiempos (`script.md`), fuentes y verificación de cada número (`sources.md`), descripción metodológica |
-| `assets_meta/` | Metadatos de cada imagen satelital (producto, fecha, nubosidad, caja) y créditos de versiones anteriores |
-| `fonts/` | Tipografías abiertas (OFL) |
-| `harness/` | Harness genérico para videos de historias con datos (`story.yaml` + datos → video), con el ejemplo `sismos-argentina` y este video portado en `stories/incendios-argentina/` |
+| `pipeline/` | Scripts for download, processing, frame rendering, music and final assembly |
+| `data/` | Small processed data (CSV, JSON, GeoJSON) and the statistics the renderer reads |
+| `docs/` | Timed script (`script.md`), sources and verification of every number (`sources.md`), methodology description (`descripcion-metodologica.md`) |
+| `assets_meta/` | Metadata for each satellite image (product, date, cloud cover, bounding box) and credits from earlier versions |
+| `fonts/` | Open fonts (OFL) |
+| `harness/` | Generic harness for data-story videos (`story.yaml` + data → video), with the `sismos-argentina` example and this video ported to `stories/incendios-argentina/` |
 
-Los datos crudos pesados (archivo FIRMS, rásters MODIS, Sentinel-2) no están en el repo: se bajan con los scripts.
+Heavy raw data (FIRMS archive, MODIS rasters, Sentinel-2) is not in the repo: the scripts download it.
 
-## Fuentes de datos
+## Data sources
 
-- **Focos de calor:** NASA FIRMS, VIIRS S-NPP 375 m, archivo país Argentina 2012–2025 (tipo 0, confianza nominal o alta).
-- **Área quemada:** NASA MODIS MCD64A1 Colección 6.1 (500 m, mensual), servidor SFTP de la Universidad de Maryland.
-- **Causas de incendios 1993–2019:** Ministerio de Ambiente de la Nación (datos abiertos).
-- **Límites:** INDEC (provincias, radios del Censo 2022) e IGN.
-- **Caña de azúcar en Tucumán:** EEAOC (departamentos cañeros).
-- **Imágenes satelitales:** Copernicus Sentinel-2.
-- v9 no usa fotos ni titulares de prensa: todo ocurre sobre un único mapa, con zooms a imágenes Sentinel-2. Cifras puntuales: ver `docs/sources.md` y `assets_meta/v9/`.
+- **Fire hotspots:** NASA FIRMS, VIIRS S-NPP 375 m, Argentina country archive 2012–2025 (type 0, nominal or high confidence).
+- **Burned area:** NASA MODIS MCD64A1 Collection 6.1 (500 m, monthly), University of Maryland SFTP server.
+- **Fire causes 1993–2019:** Argentina's national Ministry of Environment (Ministerio de Ambiente de la Nación, open data).
+- **Boundaries:** INDEC (provinces, 2022 Census radios) and IGN.
+- **Sugarcane in Tucumán:** EEAOC (sugarcane-growing departments).
+- **Satellite imagery:** Copernicus Sentinel-2.
+- v9 uses no photos or press headlines: everything happens on a single map, with zooms into Sentinel-2 images. Specific figures: see `docs/sources.md` and `assets_meta/v9/`.
 
-## Cómo se genera
+## How it is generated
 
 ```
 pipeline/prep_data.py        # FIRMS VIIRS -> data/raw/points.npz + stats
-pipeline/burn/fetch_umd.py   # descarga MCD64A1 (UMD)
-pipeline/prep_burn.py        # área quemada por provincia, cicatrices
-pipeline/causas.py           # causas (Min. Ambiente)
-pipeline/prep_tucuman.py     # focos en la zona cañera durante la zafra
-pipeline/prep_v2.py, prep_v4.py, prep_v7.py   # estadísticas y ranking provincial
-pipeline/v9/render_v9.py --nums   # (v9, versión actual) imprime todos los números que salen en pantalla
-pipeline/v9/s2_date.py            # recortes Copernicus Sentinel-2 de una fecha (Burruyacú 23/09/2025, Delta 23/09/2020)
-pipeline/v9/build_v9.sh           # render de cuadros en paralelo + música + armado
+pipeline/burn/fetch_umd.py   # download MCD64A1 (UMD)
+pipeline/prep_burn.py        # burned area per province, burn scars
+pipeline/causas.py           # fire causes (Ministry of Environment)
+pipeline/prep_tucuman.py     # hotspots in the sugarcane zone during the harvest (zafra)
+pipeline/prep_v2.py, prep_v4.py, prep_v7.py   # statistics and provincial ranking
+pipeline/v9/render_v9.py --nums   # (v9, current version) prints every number shown on screen
+pipeline/v9/s2_date.py            # Copernicus Sentinel-2 crops for one date (Burruyacú 2025-09-23, Delta 2020-09-23)
+pipeline/v9/build_v9.sh           # parallel frame render + music + assembly
 ```
 
-Requisitos: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
+Requirements: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
 
-Ningún número está tipeado a mano en el render: todos se leen de los JSON de `data/`, y `render_v9.py` tiene un `assert` por cada redondeo verbal («casi», «más de») y por cada valor del ranking.
+No number is typed by hand in the renderer: all of them are read from the JSON files in `data/`, and `render_v9.py` has an `assert` for every verbal rounding («casi» / "almost", «más de» / "more than") and for every ranking value.
 
 ## Harness (`harness/`)
 
-`harness/` es la versión genérica de este pipeline: un paquete de Python que arma un video corto (≤ 60 s) a partir de un
-`story.yaml` (las escenas y sus textos) y un `facts.py` (cada número que sale en pantalla, con un `assert` por cada
-redondeo verbal). Las reglas de lectura (texto ≥ 48 px, palabras por escena, tiempo mínimo en pantalla, duración total),
-la música procedural y la normalización a −14 LUFS están en código: si algo no cumple, el build falla.
+`harness/` is the generic version of this pipeline: a Python package that builds a short video (≤ 60 s) from a
+`story.yaml` (the scenes and their text) and a `facts.py` (every number shown on screen, with an `assert` for every
+verbal rounding). The readability rules (text ≥ 48 px, words per scene, minimum time on screen, total duration),
+the procedural music and the normalization to −14 LUFS live in code: if something does not comply, the build fails.
 
 ```bash
 cd harness
 python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt                        # Python 3.10+ y ffmpeg en el PATH
+pip install -r requirements.txt                        # Python 3.10+ and ffmpeg on the PATH
 
-make test                                              # pytest: reglas + render del ejemplo chico
-make check STORY=stories/sismos-argentina/story.yaml   # valida YAML, calcula facts, chequea reglas
-make video STORY=stories/sismos-argentina/story.yaml PREVIEW=1   # render rápido a media resolución
-python -m harness new "Mi historia"                    # historia nueva desde la plantilla
+make test                                              # pytest: rules + render of the small example
+make check STORY=stories/sismos-argentina/story.yaml   # validate YAML, compute facts, check rules
+make video STORY=stories/sismos-argentina/story.yaml PREVIEW=1   # fast half-resolution render
+python -m harness new "My story"                       # new story from the template
 ```
 
-Sin `make`: `python -m harness check|qa|render|still <story>`. También hay `Dockerfile`.
+Without `make`: `python -m harness check|qa|render|still <story>`. There is also a `Dockerfile`.
 
-- `harness/stories/sismos-argentina/`: ejemplo chico (USGS, datos en el repo, sin red, ~1 min).
-- `harness/stories/incendios-argentina/`: este video (v9) portado al harness. Los datos pesados no están en el repo;
-  su `README.md` dice qué script del `pipeline/` genera cada uno.
-- Documentación: `harness/README.md`, `harness/AGENTS.md` (flujo y reglas para agentes de código), `harness/docs/`.
+- `harness/stories/sismos-argentina/`: small example (USGS earthquakes, data in the repo, no network, ~1 min).
+- `harness/stories/incendios-argentina/`: this video (v9) ported to the harness. The heavy data is not in the repo;
+  its `README.md` says which `pipeline/` script generates each file.
+- Documentation: `harness/README.md`, `harness/AGENTS.md` (workflow and rules for coding agents), `harness/docs/`.
 
-## Uso de IA
+## Use of AI
 
-Un asistente de IA ayudó, bajo supervisión del autor, a escribir el código de procesamiento de datos, la animación y la música sintetizada por código, y a revisar las fuentes. No se usaron imágenes ni videos generados por IA.
+An AI assistant helped, under the author's supervision, to write the data-processing code, the animation and the code-synthesized music, and to review the sources. No AI-generated images or videos were used.
 
-## Licencia
+## License
 
-Código: MIT. Datos derivados: siguen la licencia de cada fuente original (ver `docs/sources.md`).
+Code: MIT. Derived data: follows the license of each original source (see `docs/sources.md`).

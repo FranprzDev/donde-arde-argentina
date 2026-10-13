@@ -1,36 +1,38 @@
-# v9 — «¿Dónde arde Argentina?» (Historia visual, 59,77 s, 1080p30)
+# v9 — «¿Dónde arde Argentina?» (Visual story, 59.77 s, 1080p30)
 
-**v9 = v8 + notas del autor (13-10-2026), todas obligatorias:**
-1. **Rayos que pegan en la Argentina:** en el globo y en el mapa plano cada rayo del Sol aterriza en un punto dentro del país y su trazo termina ahí (destello + reflejo); antes los primeros rayos caían en cualquier punto del globo.
-2. **Tucumán con imagen de Tucumán:** sale la foto de Queensland. La parada termina con un zoom dentro del mismo mapa hasta una imagen Copernicus Sentinel-2 de **Burruyacú (departamento cañero), 23-09-2025, plena zafra**: dos columnas de humo de quemas activas, con los focos VIIRS de esa tarde sobre el origen del humo. No existe foto abierta verificada de una quema de caña en Tucumán (Commons revisado otra vez).
-3. **Una sola visualización:** salen los otros dos cortes a foto (pastizal, bosque) y los 4 titulares. Entre Ríos termina con un zoom a Sentinel-2 de **las islas del Delta frente a Rosario, 23-09-2020**; la Comarca conserva su antes/después Sentinel-2 en el lugar. Todo pasa sobre un mapa continuo.
-4. **Sin Corrientes:** sale la cicatriz Corrientes 2022 resaltada (se veía desplazada) y el titular de La Nación. Corrientes sólo aparece como nombre en el ranking (puesto 4, dato real).
-5. **Menos texto, más grande, más tiempo:** ≤ ~12 palabras por momento; cuerpo ≥ 48 px (cifras 150 px, frases 66–124 px); cada texto ≥ 0,35 s por palabra + 1 s (mín. 2,5 s), verificado por `assert` en `render_v9.py`. Para que entre en 60 s se quitaron beats, no se aceleró: la tarjeta «2.550.467 FOCOS», el segundo título, la fuente gris de las causas, las 24 filas del ranking y las hectáreas del top 5, la nota gris de Tucumán y el encabezado del cierre.
+The video is in Spanish: every on-screen string below is quoted **verbatim in Spanish** («…»), exactly as it appears on screen.
 
-Se mantienen: el contorno de todo el país encendido, el ranking (ahora sólo top 5 con nombres), el mapa final con todo lo que ardió 2012–2025 bajo «YA NO FALTAN DATOS. / FALTA RESPONSABILIDAD.», cifras sólo desde los JSON del pipeline con `assert`, −14 LUFS, sin nombre del autor.
+**v9 = v8 + the author's notes (2026-10-13), all mandatory:**
+1. **Rays that hit Argentina:** on the globe and on the flat map, every ray from the Sun lands on a point inside the country and its streak ends there (flash + glint); before, the first rays fell anywhere on the globe.
+2. **Tucumán with an image of Tucumán:** the Queensland photo is gone. The stop ends with a zoom, within the same map, into a Copernicus Sentinel-2 image of **Burruyacú (a sugarcane department), 2025-09-23, at the height of the harvest (zafra)**: two smoke columns from active burns, with that afternoon's VIIRS hotspots over the source of the smoke. There is no verified open photo of a sugarcane burn in Tucumán (Commons checked again).
+3. **A single visualization:** the other two cuts to photos (grassland, forest) and the 4 headlines are gone. Entre Ríos ends with a zoom into Sentinel-2 of **the Delta islands opposite Rosario, 2020-09-23**; the Comarca keeps its Sentinel-2 before/after in place. Everything happens on one continuous map.
+4. **No Corrientes:** the highlighted Corrientes 2022 burn scar (it looked misplaced) and the La Nación headline are gone. Corrientes only appears as a name in the ranking (4th place, real data).
+5. **Less text, bigger, longer:** ≤ ~12 words per moment; body text ≥ 48 px (figures 150 px, phrases 66–124 px); each text ≥ 0.35 s per word + 1 s (min. 2.5 s), verified by `assert` in `render_v9.py`. To fit in 60 s, beats were removed rather than sped up: the «2.550.467 FOCOS» card, the second title, the grey source line for the causes, the 24 ranking rows and the top-5 hectares, the grey Tucumán note and the closing header.
 
-| Tiempo (s) | Imagen / cámara | Texto en pantalla (palabras → tiempo en pantalla) | Música |
+Kept: the outline of the whole country lit up, the ranking (now only the top 5 with names), the final map with everything that burned 2012–2025 under «YA NO FALTAN DATOS. / FALTA RESPONSABILIDAD.», figures only from the pipeline JSON files with `assert`s, −14 LUFS, no author name.
+
+| Time (s) | Image / camera | On-screen text, Spanish verbatim (words → time on screen) | Music |
 |---|---|---|---|
-| 0,0–4,6 | Sol → rayos → Tierra → Argentina: todos los rayos aterrizan en el país | «¿DÓNDE ARDE / ARGENTINA?» (0,45–3,85; 3 → 3,4 s) | rugido solar, destello por rayo |
-| 4,0–5,45 | Mapa plano: siguen cayendo rayos sobre la Argentina, que se calienta | «EL SOL CALIENTA.» (4,45–7,05; 3 → 2,6 s) | pad cálido |
-| 5,55–10,6 | El calor se apaga; una chispa (primer foco VIIRS, ene-2012) | **«LA CHISPA ES HUMANA.»** + «9 DE CADA 10, CON CAUSA CONOCIDA» (5,65–10,6; 11 → 4,95 s) | fósforo, riser |
-| 8,3–12,2 | La chispa enciende 14 años de focos VIIRS; año grande + curva mensual (2012 · 2016 · 2020 · 2024) | (el texto de la chispa sigue hasta 10,6) · leyenda «1 punto = 1 foco de calor (satélite)» | golpe, tambores, tic por enero |
-| 12,2–13,5 | Todo encendido → ceniza → cicatriz MODIS | — · leyenda «gris = área quemada» | braam, whoosh |
-| 13,5–18,7 | Cicatriz nacional | **«26,6 MILLONES DE HA»** / «QUEMADAS: CASI 1 DE CADA 10 DEL PAÍS» (12 → 5,25 s) | boom |
-| 18,7–20,4 | Las 24 jurisdicciones se encienden en el mapa (coropleta), sin texto | — | un tic por provincia |
-| 20,4–25,8 | Top 5 en el mapa (números) | «5 PROVINCIAS = 53 % DE LO QUEMADO» / 1 FORMOSA · 2 LA PAMPA · 3 SANTA FE · 4 CORRIENTES · 5 SANTIAGO DEL ESTERO (5,4 s) | hit, tambores |
-| 25,8–26,8 | Zoom directo a Tucumán | — | whoosh |
-| 26,8–31,9 | **Tucumán**: zona cañera contorneada, focos de la zafra; aparece el marco del zoom | [bandera] «TUCUMÁN» / **«89 %»** «DE SUS FOCOS» / «EN ZONA CAÑERA, EN PLENA ZAFRA» (11 → 4,9 s) | hit, tambores |
-| 31,8–32,8 | Zoom dentro del mapa hasta el marco | — | whoosh descendente |
-| 32,8–35,4 | **Sentinel-2, Burruyacú 23-09-2025**: columnas de humo; focos VIIRS de esa tarde | «BURRUYACÚ, TUCUMÁN» / «23/09/2025 · Sentinel-2» (4 → 2,6 s) | impacto + rugido de fuego |
-| 35,4–36,8 | Zoom out y vuelo a Entre Ríos | — | whoosh |
-| 36,8–41,5 | **Entre Ríos 2020**: focos del año, cicatriz MODIS 2020 resaltada | [bandera] «ENTRE RÍOS · 2020» / **«37.506»** (cuenta) «FOCOS» / «CASI 7 VECES LO HABITUAL» (10 → 4,7 s) | hit, tambores |
-| 41,4–42,4 | Zoom al Delta | — | whoosh |
-| 42,4–45,5 | **Sentinel-2, islas frente a Rosario 23-09-2020**: humo sobre las islas, Rosario a la izquierda; focos VIIRS de esa tarde | «ISLAS DEL DELTA» / «23/09/2020 · Sentinel-2» + rótulo «ROSARIO» (6 → 3,1 s) | impacto + rugido |
-| 45,5–47,1 | Zoom out y vuelo a la cordillera | — | whoosh, swell |
-| 47,1–52,2 | **Comarca Andina**: Sentinel-2 dic-2024 → abr-2025 → abr-2026, cicatrices 2025 (ámbar) / 2026 (rojo) | [banderas] «COMARCA ANDINA · 2026» / **«42.000»** (cuenta) «HA» / «7 VECES MÁS QUE EN 2025» (11 → 5,1 s) · rótulos «DIC 2024 / ABR 2025 / ABR 2026 · Sentinel-2 · ■ 2025 · ■ 2026» | drop, coro |
-| 52,2–52,9 | Zoom out al país | — | redoble |
-| 52,9–56,8 | **Cierre**: 24 jurisdicciones encendidas; todos los focos 2012–2025 se acumulan sobre la cicatriz MODIS | 53,67 **«YA NO FALTAN DATOS.»** / 53,92 **«FALTA RESPONSABILIDAD.»** (5 → 3,1 s) | silencio 53,4–53,67; boom, taiko, campana |
-| 56,8–59,77 | Tarjeta de FUENTES (8 líneas, 48 px) | ver sources.md | decrescendo |
+| 0.0–4.6 | Sun → rays → Earth → Argentina: every ray lands in the country | «¿DÓNDE ARDE / ARGENTINA?» (0.45–3.85; 3 → 3.4 s) | solar roar, flash per ray |
+| 4.0–5.45 | Flat map: rays keep falling on Argentina, which heats up | «EL SOL CALIENTA.» (4.45–7.05; 3 → 2.6 s) | warm pad |
+| 5.55–10.6 | The heat fades; a spark (first VIIRS hotspot, Jan 2012) | **«LA CHISPA ES HUMANA.»** + «9 DE CADA 10, CON CAUSA CONOCIDA» (5.65–10.6; 11 → 4.95 s) | match strike, riser |
+| 8.3–12.2 | The spark ignites 14 years of VIIRS hotspots; big year label + monthly curve (2012 · 2016 · 2020 · 2024) | (the spark text stays until 10.6) · legend «1 punto = 1 foco de calor (satélite)» | hit, drums, tick each January |
+| 12.2–13.5 | Everything lit → ash → MODIS burn scar | — · legend «gris = área quemada» | braam, whoosh |
+| 13.5–18.7 | National burn scar | **«26,6 MILLONES DE HA»** / «QUEMADAS: CASI 1 DE CADA 10 DEL PAÍS» (12 → 5.25 s) | boom |
+| 18.7–20.4 | The 24 jurisdictions light up on the map (choropleth), no text | — | one tick per province |
+| 20.4–25.8 | Top 5 on the map (numbers) | «5 PROVINCIAS = 53 % DE LO QUEMADO» / 1 FORMOSA · 2 LA PAMPA · 3 SANTA FE · 4 CORRIENTES · 5 SANTIAGO DEL ESTERO (5.4 s) | hit, drums |
+| 25.8–26.8 | Direct zoom to Tucumán | — | whoosh |
+| 26.8–31.9 | **Tucumán**: sugarcane zone outlined, harvest hotspots; the zoom frame appears | [flag] «TUCUMÁN» / **«89 %»** «DE SUS FOCOS» / «EN ZONA CAÑERA, EN PLENA ZAFRA» (11 → 4.9 s) | hit, drums |
+| 31.8–32.8 | Zoom within the map into the frame | — | descending whoosh |
+| 32.8–35.4 | **Sentinel-2, Burruyacú 2025-09-23**: smoke columns; that afternoon's VIIRS hotspots | «BURRUYACÚ, TUCUMÁN» / «23/09/2025 · Sentinel-2» (4 → 2.6 s) | impact + fire roar |
+| 35.4–36.8 | Zoom out and fly to Entre Ríos | — | whoosh |
+| 36.8–41.5 | **Entre Ríos 2020**: the year's hotspots, MODIS 2020 burn scar highlighted | [flag] «ENTRE RÍOS · 2020» / **«37.506»** (counts up) «FOCOS» / «CASI 7 VECES LO HABITUAL» (10 → 4.7 s) | hit, drums |
+| 41.4–42.4 | Zoom to the Delta | — | whoosh |
+| 42.4–45.5 | **Sentinel-2, islands opposite Rosario 2020-09-23**: smoke over the islands, Rosario on the left; that afternoon's VIIRS hotspots | «ISLAS DEL DELTA» / «23/09/2020 · Sentinel-2» + label «ROSARIO» (6 → 3.1 s) | impact + roar |
+| 45.5–47.1 | Zoom out and fly to the Andes | — | whoosh, swell |
+| 47.1–52.2 | **Comarca Andina**: Sentinel-2 Dec 2024 → Apr 2025 → Apr 2026, burn scars 2025 (amber) / 2026 (red) | [flags] «COMARCA ANDINA · 2026» / **«42.000»** (counts up) «HA» / «7 VECES MÁS QUE EN 2025» (11 → 5.1 s) · labels «DIC 2024 / ABR 2025 / ABR 2026 · Sentinel-2 · ■ 2025 · ■ 2026» | drop, choir |
+| 52.2–52.9 | Zoom out to the country | — | drum roll |
+| 52.9–56.8 | **Closing**: 24 jurisdictions lit; all 2012–2025 hotspots accumulate over the MODIS burn scar | 53.67 **«YA NO FALTAN DATOS.»** / 53.92 **«FALTA RESPONSABILIDAD.»** (5 → 3.1 s) | silence 53.4–53.67; boom, taiko, bell |
+| 56.8–59.77 | SOURCES card (FUENTES, 8 lines, 48 px) | see sources.md | decrescendo |
 
-Tamaños: texto mínimo 48 px (leyendas, rótulos, fuentes, años de la curva); encabezados mono 52 px; frases 66 px; cifras 150 px; cierre 124 px.
+Sizes: minimum text 48 px (legends, labels, sources, curve years); mono headers 52 px; phrases 66 px; figures 150 px; closing 124 px.

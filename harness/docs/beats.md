@@ -1,27 +1,28 @@
-# Referencia de beats (escenas)
+# Beat (scene) reference
 
-Generada desde los docstrings de `harness/beats/*.py` (`python -m harness beats` lista los tipos).
+Generated from the docstrings in `harness/beats/*.py` (`python -m harness beats` lists the types).
+The on-screen strings in the examples are in Spanish, like the stories in this repo.
 
-## Claves comunes a todos los beats
+## Keys common to every beat
 
-| clave | qué hace |
+| key | what it does |
 |---|---|
-| `id` | nombre de la escena (aparece en errores y en el reporte) |
-| `type` | tipo de beat |
-| `duration` | `auto` (por defecto: lo justo para leer el texto) o segundos |
-| `min_duration`, `pad` | piso de duración / segundos extra al final |
-| `camera` | `{center: [lon, lat], zoom, anchor}` · `{fit: código(s) \| [lon0,lat0,lon1,lat1], size, anchor}` · `home` · `previous` (por defecto) |
-| `transition` | `{mode: auto\|fly\|zoomto\|ease\|cut, dur}`: movimiento de cámara antes del texto |
-| `text_delay` | segundos entre el fin del movimiento y el texto |
-| `layers` | capas del mapa visibles (ver `harness/layers.py`): puntos `static\|lit\|burnout\|accumulate`, rásters `fill\|event\|outline`, imágenes, `kind: choropleth` |
-| `highlight` | contornos con glow: `[{regions: [...]} \| {shape: nombre}, color, width, from}]` |
-| `spotlight` | `{regions: [...], dim: 0.25}` oscurece el resto del mapa |
-| `outline_all` | `dim` \| `glow`: todas las regiones contorneadas |
-| `legend` | mostrar leyendas de capas (abajo a la derecha) |
-| `flash`, `shake` | destello al revelar el texto (0–1) / temblor de cámara (px) |
+| `id` | scene name (appears in errors and in the report) |
+| `type` | beat type |
+| `duration` | `auto` (default: just enough to read the text) or seconds |
+| `min_duration`, `pad` | duration floor / extra seconds at the end |
+| `camera` | `{center: [lon, lat], zoom, anchor}` · `{fit: code(s) \| [lon0,lat0,lon1,lat1], size, anchor}` · `home` · `previous` (default) |
+| `transition` | `{mode: auto\|fly\|zoomto\|ease\|cut, dur}`: camera move before the text |
+| `text_delay` | seconds between the end of the move and the text |
+| `layers` | visible map layers (see `harness/layers.py`): points `static\|lit\|burnout\|accumulate`, rasters `fill\|event\|outline`, images, `kind: choropleth` |
+| `highlight` | glowing outlines: `[{regions: [...]} \| {shape: name}, color, width, from}]` |
+| `spotlight` | `{regions: [...], dim: 0.25}` darkens the rest of the map |
+| `outline_all` | `dim` \| `glow`: every region outlined |
+| `legend` | show layer legends (bottom right) |
+| `flash`, `shake` | flash when the text is revealed (0–1) / camera shake (px) |
 
-Colores: cualquier clave de la paleta (`text`, `muted`, `accent`, `accent2`, `hot`, `red`, `ash`...) o un hex `"#RRGGBB"`.
-Textos: cualquier string acepta `{fact|filtro}`; filtros: `int`, `dec:N`, `pct`, `pct:N`, `div:X`, `mul:X`, `round:N`, `floor:Q`, `upper`, `abs`.
+Colors: any palette key (`text`, `muted`, `accent`, `accent2`, `hot`, `red`, `ash`...) or a hex `"#RRGGBB"`.
+Text: any string accepts `{fact|filter}`; filters: `int`, `dec:N`, `pct`, `pct:N`, `div:X`, `mul:X`, `round:N`, `floor:Q`, `upper`, `abs`.
 
 ## `globe_intro.py`
 

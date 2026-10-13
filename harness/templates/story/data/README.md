@@ -1,7 +1,7 @@
-# Datos de __NAME__
+# Data for __NAME__
 
-Poné acá **solo datos abiertos** y anotá cada uno en `../SOURCES.md` (quién lo publica, URL, fecha de descarga, licencia, filtros aplicados).
+Put **open data only** here and record each file in `../SOURCES.md` (publisher, URL, download date, license, filters applied).
 
-- Archivos chicos (CSV, GeoJSON, JSON) → se commitean.
-- Crudos pesados (rásters, archivos de satélite, > 5 MB) → `data/raw/` (está en `.gitignore`) + un script `prepare.py` que los baja.
-- `provincias_ign.geojson` y `contexto_tierra.geojson` son geometría de arranque (IGN CC BY 4.0 / Natural Earth DP): reemplazalas si tu mapa es otro.
+- Small files (CSV, GeoJSON, JSON) → committed.
+- Heavy raw files (rasters, satellite archives, > 5 MB) → `data/raw/` (it is in `.gitignore`) + a `prepare.py` script that downloads them.
+- `provincias_ign.geojson` and `contexto_tierra.geojson` are starter geometry (IGN CC BY 4.0 / Natural Earth PD): replace them if your map is different.

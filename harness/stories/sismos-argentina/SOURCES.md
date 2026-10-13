@@ -1,10 +1,10 @@
-# Fuentes — Sismos en la Argentina, 2015–2024 (ejemplo)
+# Sources — Earthquakes in Argentina, 2015–2024 (example; on-screen text in Spanish)
 
-| Dato en pantalla | Dataset | Publicado por | URL | Licencia | Cálculo (`facts.py`) |
+| On-screen figure | Dataset | Published by | URL | License | Computation (`facts.py`) |
 |---|---|---|---|---|---|
-| Cada punto, el total (869), el ranking, Salta (262), «3 de cada 10», «más de la mitad, en el noroeste» | ANSS Comprehensive Earthquake Catalog (ComCat), M ≥ 4,5, 2015-01-01 a 2024-12-31, caja −74/−56/−53/−21, descargado 13/10/2026 | USGS | https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2025-01-01&minmagnitude=4.5&minlatitude=-56&maxlatitude=-21&minlongitude=-74&maxlongitude=-53 | Dominio público (USGS) | se conservan solo epicentros dentro de las provincias; región = punto en polígono |
-| Límites provinciales | Provincias (simplificadas a 0,01°) | IGN, vía Georef | https://infra.datos.gob.ar/georef/provincias.geojson | CC BY 4.0 | — |
-| Tierra de contexto | Land 1:50m | Natural Earth | https://www.naturalearthdata.com | Dominio público | recortada al marco |
+| Every dot, the total (869), the ranking, Salta (262), «3 de cada 10» ("3 in 10"), «más de la mitad, en el noroeste» ("more than half, in the northwest") | ANSS Comprehensive Earthquake Catalog (ComCat), M ≥ 4.5, 2015-01-01 to 2024-12-31, box −74/−56/−53/−21, downloaded 2026-10-13 | USGS | https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2025-01-01&minmagnitude=4.5&minlatitude=-56&maxlatitude=-21&minlongitude=-74&maxlongitude=-53 | Public domain (USGS) | only epicenters inside the provinces are kept; region = point in polygon |
+| Provincial boundaries | Provinces (simplified to 0.01°) | IGN, via Georef | https://infra.datos.gob.ar/georef/provincias.geojson | CC BY 4.0 | — |
+| Context land | Land 1:50m | Natural Earth | https://www.naturalearthdata.com | Public domain | clipped to the frame |
 
-«Noroeste» = Salta, Jujuy, Tucumán, Catamarca, La Rioja y Santiago del Estero. La asignación usa límites simplificados:
-un sismo muy cerca de un límite podría caer en la provincia vecina (por eso Salta da 262 y no un número oficial).
+"Northwest" (Noroeste) = Salta, Jujuy, Tucumán, Catamarca, La Rioja and Santiago del Estero. The assignment uses simplified
+boundaries: an earthquake very close to a border could fall in the neighbouring province (which is why Salta gives 262 and not an official figure).

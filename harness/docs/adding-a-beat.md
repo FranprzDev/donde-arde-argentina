@@ -1,7 +1,7 @@
-# Cómo agregar un tipo de beat
+# How to add a beat type
 
-Un beat es una escena: sabe cuánto dura, qué texto muestra (para las reglas), cómo se mueve la cámara, qué dibuja
-sobre el mapa y qué suena. Ejemplo mínimo: un contador que sube sobre el mapa.
+A beat is a scene: it knows how long it lasts, what text it shows (for the rules), how the camera moves, what it draws
+over the map and what it sounds like. Minimal example: a counter that counts up over the map.
 
 ```python
 # harness/beats/counter.py
@@ -9,7 +9,7 @@ sobre el mapa y qué suena. Ejemplo mínimo: un contador que sube sobre el mapa.
 
     - type: counter
       value: "{total}"          # a fact (integer)
-      label: "REGISTROS"
+      label: "RECORDS"
 """
 from ..core.fx import count, slam
 from ..rules import TextBlock
@@ -45,20 +45,20 @@ class Counter(MapBeat):
         return [(self.text_t0, "hit", 0.9)]
 ```
 
-Después:
+Then:
 
-1. Importalo en `harness/beats/__init__.py` (`from . import counter`).
-2. Documentá sus claves en `docs/beats.md` (copiá el docstring).
-3. Usalo en una historia y corré `python -m harness check` + `qa --preview`.
-4. Agregá un test en `tests/` si tiene lógica propia de tiempos.
+1. Import it in `harness/beats/__init__.py` (`from . import counter`).
+2. Document its keys in `docs/beats.md` (copy the docstring).
+3. Use it in a story and run `python -m harness check` + `qa --preview`.
+4. Add a test in `tests/` if it has its own timing logic.
 
-## Reglas para beats nuevos
+## Rules for new beats
 
-- Posiciones y tamaños en **unidades de diseño** (lienzo 1920×1080); `fr.S` escala a la resolución real.
-  Pedí fuentes con `self.theme.font(tipo, tamaño)`: rechaza tamaños bajo el mínimo.
-- Todo texto visible tiene que estar en algún `TextBlock` (si no, las reglas no lo ven). Rótulos que no son prosa
-  (años de un eje) van con `count=False`, pero igual respetan el tamaño mínimo.
-- Nada de números literales en el código de dibujo: vienen de `self.story.facts` o de placeholders.
-- `draw_map(A, t, cam, R)` trabaja sobre la imagen float (H, W, 3) antes del texto; `draw_ui(fr, t, cam, R)` sobre el `Canvas`.
-- Para cosas que deben verse antes/después de la escena: `draw_pre` (en el beat anterior) y `draw_post` (en el siguiente).
-- Cámara propia: sobreescribí `camera_at(t)` y `end_camera()` (ver `satellite_zoom`).
+- Positions and sizes in **design units** (1920×1080 canvas); `fr.S` scales to the real resolution.
+  Request fonts with `self.theme.font(kind, size)`: it rejects sizes below the minimum.
+- All visible text must be in some `TextBlock` (otherwise the rules cannot see it). Labels that are not prose
+  (axis years) use `count=False`, but they still respect the minimum size.
+- No literal numbers in drawing code: they come from `self.story.facts` or from placeholders.
+- `draw_map(A, t, cam, R)` works on the float image (H, W, 3) before the text; `draw_ui(fr, t, cam, R)` works on the `Canvas`.
+- For things that must be visible before/after the scene: `draw_pre` (in the previous beat) and `draw_post` (in the next one).
+- Own camera: override `camera_at(t)` and `end_camera()` (see `satellite_zoom`).

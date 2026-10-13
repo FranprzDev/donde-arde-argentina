@@ -1,11 +1,11 @@
 # CLAUDE.md
 
-Leé y seguí [`AGENTS.md`](AGENTS.md): flujo, reglas no negociables y mapa del código de este harness.
+Read and follow [`AGENTS.md`](AGENTS.md): workflow, non-negotiable rules and a map of this harness's code.
 
-Atajos:
-- Validar rápido: `python -m harness check stories/<slug>` (segundos; corré esto después de cada cambio al YAML o a facts.py).
-- Ver cómo queda: `python -m harness qa stories/<slug> --preview` y abrí `stories/<slug>/build/qa/contact_sheet.png`.
+Shortcuts:
+- Quick validation: `python -m harness check stories/<slug>` (seconds; run it after every change to the YAML or to facts.py).
+- See how it looks: `python -m harness qa stories/<slug> --preview` and open `stories/<slug>/build/qa/contact_sheet.png`.
 - Render: `make video STORY=stories/<slug>/story.yaml`.
 - Tests: `pytest -q`.
 
-No relajes reglas de lectura ni asserts para que un build pase; cambiá el guion. No agregues números a mano. No uses imágenes generadas por IA.
+Do not relax readability rules or asserts to make a build pass; change the script. Do not add numbers by hand. Do not use AI-generated images.

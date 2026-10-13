@@ -1,69 +1,69 @@
-# data-video — harness para videos de historias con datos
+# data-video — a harness for data-story videos
 
-Un `story.yaml` + datos abiertos → un video corto (≤ 60 s), legible en el celular, con cada número verificable.
-Todo se dibuja con código: mapa, globo, animación, tipografía y música. **Sin imágenes generadas por IA.**
+One `story.yaml` + open data → a short video (≤ 60 s), readable on a phone, with every number verifiable.
+Everything is drawn with code: map, globe, animation, typography and music. **No AI-generated images.**
 
-Pensado para que lo use una persona o un agente de código (Codex, Claude Code, Cursor): ver [`AGENTS.md`](AGENTS.md).
+Built to be used by a person or by a coding agent (Codex, Claude Code, Cursor): see [`AGENTS.md`](AGENTS.md).
 
-![estilo: fondo oscuro, glow, tipografía condensada, paleta naranja](docs/img/contact_sheet_sismos.jpg)
+![style: dark background, glow, condensed typography, orange palette](docs/img/contact_sheet_sismos.jpg)
 
-## Inicio rápido
+## Quick start
 
 ```bash
 cd harness
 python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt          # Python 3.10+ y ffmpeg en el PATH
+pip install -r requirements.txt          # Python 3.10+ and ffmpeg on the PATH
 
-make check STORY=stories/sismos-argentina/story.yaml   # valida YAML, calcula facts.json, chequea reglas de lectura
-make qa    STORY=stories/sismos-argentina/story.yaml   # capturas + contact sheet + hoja "celular" + reporte de tiempos
-make video STORY=stories/sismos-argentina/story.yaml   # render completo → stories/sismos-argentina/build/sismos-argentina.mp4
-make test                                              # pytest: renderiza el ejemplo chico de punta a punta
+make check STORY=stories/sismos-argentina/story.yaml   # validate YAML, compute facts.json, check readability rules
+make qa    STORY=stories/sismos-argentina/story.yaml   # stills + contact sheet + "phone" sheet + timing report
+make video STORY=stories/sismos-argentina/story.yaml   # full render → stories/sismos-argentina/build/sismos-argentina.mp4
+make test                                              # pytest: renders the small example end to end
 ```
 
-Sin `make`: `python -m harness check|qa|render|still <story>` · `python -m harness new "Mi historia"` · `python -m harness beats`.
+Without `make`: `python -m harness check|qa|render|still <story>` · `python -m harness new "My story"` · `python -m harness beats`.
 
-Con Docker: `docker build -t data-video . && docker run --rm -v "$PWD:/app" data-video make video STORY=stories/sismos-argentina/story.yaml`
+With Docker: `docker build -t data-video . && docker run --rm -v "$PWD:/app" data-video make video STORY=stories/sismos-argentina/story.yaml`
 
-El ejemplo **`stories/sismos-argentina/`** (sismos M ≥ 4,5 con epicentro en la Argentina, 2015–2024, USGS) trae sus datos
-en el repo, no usa red y renderiza en ~1 minuto a 960×540.
+The **`stories/sismos-argentina/`** example (M ≥ 4.5 earthquakes with epicenter in Argentina, 2015–2024, USGS) ships its
+data in the repo, uses no network and renders in ~1 minute at 960×540. Its on-screen text is in Spanish.
 
-## Cómo funciona
+## How it works
 
 ```
-data/ (abiertos) ──► facts.py ──► build/facts.json ──► story.yaml (beats con {placeholders}) ──► chequeo de reglas
+data/ (open) ──► facts.py ──► build/facts.json ──► story.yaml (beats with {placeholders}) ──► rule check
                                                                                                     │
-         build/<slug>.mp4 ◄── mux + −14 LUFS ◄── música procedural ◄── cuadros en paralelo ◄────────┘
+         build/<slug>.mp4 ◄── mux + −14 LUFS ◄── procedural music ◄── frames in parallel ◄──────────┘
 ```
 
-1. **Datos** (`data:` en el YAML): loaders para CSV / Parquet / GeoJSON / shapefile (puntos, regiones), rásters
-   (GeoTIFF/NPY), imágenes georreferenciadas. Adaptadores de ejemplo: NASA FIRMS (focos), MODIS MCD64A1 (área
-   quemada), Copernicus Sentinel-2 (imágenes de una fecha) — ver [`docs/data.md`](docs/data.md).
-2. **Facts**: `facts.py` calcula *todos* los números que salen en pantalla → `build/facts.json`. El YAML los usa con
-   `{nombre|filtro}` y cada redondeo verbal («casi», «más de la mitad») lleva un `assert`. Un número tipeado a mano en
-   un texto **frena el build**.
-3. **Beats** (escenas): `globe_intro`, `timeline`, `big_number`, `ranking`, `satellite_zoom`, `before_after`,
+1. **Data** (`data:` in the YAML): loaders for CSV / Parquet / GeoJSON / shapefile (points, regions), rasters
+   (GeoTIFF/NPY), georeferenced images. Example adapters: NASA FIRMS (hotspots), MODIS MCD64A1 (burned
+   area), Copernicus Sentinel-2 (single-date imagery) — see [`docs/data.md`](docs/data.md).
+2. **Facts**: `facts.py` computes *every* number shown on screen → `build/facts.json`. The YAML uses them with
+   `{name|filter}`, and every verbal rounding («casi» / "almost", «más de la mitad» / "more than half") carries an
+   `assert`. A number typed by hand into a text **stops the build**.
+3. **Beats** (scenes): `globe_intro`, `timeline`, `big_number`, `ranking`, `satellite_zoom`, `before_after`,
    `statement`, `closing`, `map`, `sources` → [`docs/beats.md`](docs/beats.md).
-4. **Reglas de lectura, en código** (el build falla con un mensaje claro): texto ≥ 48 px (a 1080p), ≤ 12 palabras a la
-   vez por escena, cada texto en pantalla ≥ 0,35 s/palabra + 1 s (mín. 2,5 s), duración total ≤ `max_duration`.
-5. **Audio**: música sintetizada con numpy a partir de los tiempos de cada escena + normalización a −14 LUFS
-   (true peak ≤ −1,5 dBTP) con ffmpeg.
-6. **QA**: contact sheet, hoja tamaño celular, reporte de tiempos, duración y loudness del mp4.
+4. **Readability rules, in code** (the build fails with a clear message): text ≥ 48 px (at 1080p), ≤ 12 words on
+   screen at once per scene, each text on screen ≥ 0.35 s/word + 1 s (min. 2.5 s), total duration ≤ `max_duration`.
+5. **Audio**: music synthesized with numpy from each scene's timing + normalization to −14 LUFS
+   (true peak ≤ −1.5 dBTP) with ffmpeg.
+6. **QA**: contact sheet, phone-size sheet, timing report, duration and loudness of the mp4.
 
-## Estructura
+## Layout
 
 ```
-harness/            el paquete (core/ dibujo y mapa · beats/ escenas · data/ loaders y adaptadores · audio/ · qa · cli)
-stories/            una carpeta por historia: story.yaml, facts.py, data/, SOURCES.md, build/ (no se commitea)
-templates/story/    lo que copia `harness new`
+harness/            the package (core/ drawing and map · beats/ scenes · data/ loaders and adapters · audio/ · qa · cli)
+stories/            one folder per story: story.yaml, facts.py, data/, SOURCES.md, build/ (not committed)
+templates/story/    what `harness new` copies
 docs/               beats.md · data.md · style-guide.md · adding-a-beat.md
-tests/              pytest (reglas + render del ejemplo)
+tests/              pytest (rules + render of the example)
 ```
 
-## Reglas del proyecto (resumen de AGENTS.md)
+## Project rules (summary of AGENTS.md)
 
-- Solo **datos abiertos**, con fuente y licencia en `SOURCES.md` y en la tarjeta final.
-- **Ningún número inventado** ni tipeado a mano: todo sale de `facts.py` y tiene `assert`.
-- **Sin imágenes ni video generados por IA** (para concursos suele estar prohibido). Fotos/satélite solo con licencia abierta y crédito.
-- No se commitean videos ni datos crudos pesados (`.gitignore`).
+- **Open data** only, with source and license in `SOURCES.md` and on the closing card.
+- **No invented** or hand-typed numbers: everything comes from `facts.py` and has an `assert`.
+- **No AI-generated images or video** (contests usually forbid them). Photos/satellite imagery only with an open license and credit.
+- Videos and heavy raw data are not committed (`.gitignore`).
 
-Licencia: MIT (código). Los datos de ejemplo mantienen su licencia (ver `stories/*/SOURCES.md`).
+License: MIT (code). Example data keeps its own license (see `stories/*/SOURCES.md`).
