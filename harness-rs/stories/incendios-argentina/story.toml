@@ -327,7 +327,7 @@ end = "T_TU1"
   card = "area"
   [[beat.text]]
   id = "legend2"
-  template = "gris = área quemada"
+  template = "área quemada {y0}–{y1} (MODIS)"
   size = 48
   font = "inter600"
   t0 = "T_SCAR"

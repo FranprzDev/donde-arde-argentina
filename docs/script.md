@@ -41,7 +41,7 @@ Kept: the outline of the whole country lit up, the ranking (now only the top 5 w
 | 4.0–5.45 | Flat map: rays keep falling on Argentina, which heats up | «EL SOL CALIENTA.» (4.45–7.05; 3 → 2.6 s) | warm pad |
 | 5.55–10.6 | The heat fades; a spark (first VIIRS hotspot, Jan 2012) | **«LA CHISPA ES HUMANA.»** + «9 DE CADA 10, CON CAUSA CONOCIDA» (5.65–10.6; 11 → 4.95 s) | match strike, riser |
 | 8.3–12.2 | The spark ignites 14 years of VIIRS hotspots; big year label + monthly curve (2012 · 2016 · 2020 · 2024) | (the spark text stays until 10.6) · legend «1 punto = 1 foco de calor (satélite)» | hit, drums, tick each January |
-| 12.2–13.5 | Everything lit → ash → MODIS burn scar | — · legend «gris = área quemada» | braam, whoosh |
+| 12.2–13.5 | Everything lit → ash → MODIS burn scar | — · legend: swatch in the scar tint + «área quemada 2012–2025 (MODIS)» | braam, whoosh |
 | 13.5–18.7 | National burn scar | **«26,6 MILLONES DE HA»** / «QUEMADAS: CASI 1 DE CADA 10 DEL PAÍS» (12 → 5.25 s) | boom |
 | 18.7–20.4 | The 24 jurisdictions light up on the map (choropleth), no text | — | one tick per province |
 | 20.4–25.8 | Top 5 on the map (numbers) | «5 PROVINCIAS = 53 % DE LO QUEMADO» / 1 FORMOSA · 2 LA PAMPA · 3 SANTA FE · 4 CORRIENTES · 5 SANTIAGO DEL ESTERO (5.4 s) | hit, drums |
