@@ -91,7 +91,7 @@ person signed off, never to make a failing check pass (today: the credits card, 
   same tone and size as «1 punto = 1 foco de calor (satélite)». The swatch also tells the scars apart from the
   hotspot dots, whose legend is still on screen during the scar beat. Same timing (T_SCAR → T_RK), same 48 px.
 - **Longer timelapse, shorter credits (v13, 2026-10-13).** In v12 the credits card sat still for 9.4 s (50.1–59.5 s)
-  while the score had already faded to near silence from ~54 s: it read as dead air. Francisco approved cutting that
+  while the score had already faded to near silence from ~54 s: it read as dead air. the author approved cutting that
   card to 6.4 s (a `hold_exception`; the rule would ask 9.4 s for its 24 words) and giving the 3.0 s to the 14-year
   timelapse: every month plays 1.7716× slower (`WARP_A/B/C` 0.036/0.0215/0.030 → 0.06378/0.03809/0.05315 s per month),
   so the timelapse runs 7.35–14.24 s instead of 7.35–11.24 s. Same data, same months, same year labels; every later
@@ -131,6 +131,45 @@ The 14-year timelapse (≈ 7–14 s since v13) is the expensive part: up to ~50 
 full-frame bloom, about 2 s per 1080p frame on 2 cores; the rest of the video costs ~0.15 s per frame. The fire layer
 and the closing embers draw their rasters once and add the bloom in the same filter (`datavid::svg::bloom_screen`);
 before, each group was drawn twice (sharp copy + blurred copy).
+
+## Final delivery
+
+Scripts in `scripts/` (bash; need `ffmpeg`, and ImageMagick for the thumbnail; `--help` lists every option):
+
+| Script | What it does |
+|---|---|
+| `scripts/render_final_chunked.sh` | 1080p final in small frame ranges: a probe pass (`INCENDIOS_PROBE`) lists the rasters each range draws, only those are hard-linked into a per-chunk asset folder, each chunk is retried (default 8 attempts) and finished chunks are skipped on a rerun; the parts are joined without re-encoding, the score is muxed once and `qa --final` runs on the result. Story, binary, frame count, chunk size, retries and paths are flags or env vars. |
+| `scripts/encode_youtube.sh` | Upload copy of the master: libx264 CRF 20, `yuv420p`, `+faststart`, audio copied (the fires master went from 95 MB to 38 MB with no visible loss). |
+| `scripts/make_thumbnail.sh` | 1280×720 JPG from a real frame: map crop on the right with a vignette, title lines in Bebas Neue (`fonts/`) on the left; text, colours, frame time and crop are flags. |
+
+Why chunks of a few dozen frames instead of the built-in `render -o` (6 chunks): on a machine whose RAM is shared with
+other jobs even a sixth of the 1080p video can be OOM-killed, and a killed chunk would restart the whole render. Small
+retried chunks lose at most one chunk's work, and the heaviest stretch (the timelapse) can use smaller chunks
+(`--tail-from`/`--tail-step`).
+
+```bash
+source env.sh && cargo build --release
+B=$CARGO_TARGET_DIR/release/incendios
+(cd stories/incendios-argentina && $B assets && $B music)        # if build/assets is not current
+scripts/render_final_chunked.sh -n 1785 --tail-from 1332 --tail-step 6 -o out/final_1080p.mp4
+scripts/encode_youtube.sh out/final_1080p.mp4                      # -> out/final_1080p_youtube.mp4
+scripts/make_thumbnail.sh out/final_1080p_youtube.mp4 out/thumbnail.jpg --time 15
+```
+
+### Checklist
+
+1. **720p drafts until the cut is approved** (`build`, `render -o`, `qa` without `--final`). Iterate on drafts only.
+2. **Chunked 1080p final** with `scripts/render_final_chunked.sh` once the cut is signed off.
+3. **QA pass**: the script runs `qa --final`; read `build/qa/QA.md` and look at the QA frames (loudness, duration,
+   resolution, minimum text size, rules).
+4. **Re-encode for upload** with `scripts/encode_youtube.sh`; keep the master.
+5. **Thumbnail** from a real frame with `scripts/make_thumbnail.sh`; open it and check text and crop.
+6. **Upload unlisted from a pseudonymous channel** when the contest is anonymous: channel name and handle both
+   pseudonymous, no real name in the title, description, tags, credits or file metadata, and no link to anything that
+   reveals the author. If a browser-automated upload fails, upload the file by hand.
+7. **Fill the submission form** with the unlisted link and the methodology/sources text from `docs/`.
+
+Never commit renders, thumbnails or other large binaries: `*.mp4` and `build/` are ignored on purpose.
 
 ## Sandbox notes
 

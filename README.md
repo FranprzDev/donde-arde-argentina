@@ -4,19 +4,22 @@ Code, data and documentation for the data-visualization video «¿Dónde arde Ar
 
 Everything in the video is generated with code from open data: the map, the animation, the numbers and the music. There are no AI-generated images. This repository exists so anyone can verify every figure and reproduce the video.
 
+The current cut (v15) is 59.5 s, 1920×1080, built entirely by the Rust harness in `harness-rs/`.
+
 ## What is here
 
 | Folder | Contents |
 |---|---|
-| `pipeline/` | Scripts for download, processing, frame rendering, music and final assembly |
-| `data/` | Small processed data (CSV, JSON, GeoJSON) and the statistics the renderer reads |
+| `harness-rs/` | **Canonical pipeline.** The all-Rust harness ([fframes](https://fframes.studio)): data prep, fact asserts, readability rules, render, procedural score, loudness mastering, QA, and the final-delivery scripts in `harness-rs/scripts/`. The video is `harness-rs/stories/incendios-argentina/` |
 | `docs/` | Timed script (`script.md`), sources and verification of every number (`sources.md`), methodology description (`descripcion-metodologica.md`) |
+| `data/` | Small processed data (CSV, JSON, GeoJSON) and the statistics earlier versions read |
 | `assets_meta/` | Metadata for each satellite image (product, date, cloud cover, bounding box) and credits from earlier versions |
-| `fonts/` | Open fonts (OFL) |
-| `harness/` | Generic harness for data-story videos (`story.yaml` + data → video), with the `sismos-argentina` example and this video ported to `stories/incendios-argentina/` |
-| `harness-rs/` | **Canonical render path.** The all-Rust harness ([fframes](https://fframes.studio)): data prep, fact asserts, readability rules, render, score and QA. The current video is `harness-rs/stories/incendios-argentina/` |
+| `fonts/` | Open fonts (OFL), also used by the thumbnail script |
+| `pipeline/` | The original Python pipeline (v2–v9). Kept as a reference: `incendios verify` checks that the Rust prep reproduces its numbers |
+| `harness/` | The earlier generic Python harness (`story.yaml` + data → video), reference only |
 
-Heavy raw data (FIRMS archive, MODIS rasters, Sentinel-2) is not in the repo: the scripts download it.
+Heavy raw data (FIRMS archive, MODIS rasters, Sentinel-2) is not in the repo, and neither are the rendered videos or
+thumbnails (`*.mp4`, `build/` are git-ignored).
 
 ## Data sources
 
@@ -25,40 +28,72 @@ Heavy raw data (FIRMS archive, MODIS rasters, Sentinel-2) is not in the repo: th
 - **Fire causes 1993–2019:** Argentina's national Ministry of Environment (Ministerio de Ambiente de la Nación, open data).
 - **Boundaries:** INDEC (provinces, 2022 Census radios) and IGN.
 - **Sugarcane in Tucumán:** EEAOC (sugarcane-growing departments).
-- **Satellite imagery:** Copernicus Sentinel-2.
-- v9 uses no photos or press headlines: everything happens on a single map, with zooms into Sentinel-2 images. Specific figures: see `docs/sources.md` and `assets_meta/v9/`.
+- **Satellite imagery:** Copernicus Sentinel-2 L2A.
 
-## How it is generated
+Every on-screen figure, how it is computed and how it was verified: `docs/sources.md`. No number is typed by hand:
+on-screen numbers come from named facts (`{er_2020|int}`), a literal digit in a text fails the build, and every verbal
+rounding («casi» / "almost", «más de» / "more than") has an `[[assert]]` in `story.toml`.
 
-```
-pipeline/prep_data.py        # FIRMS VIIRS -> data/raw/points.npz + stats
-pipeline/burn/fetch_umd.py   # download MCD64A1 (UMD)
-pipeline/prep_burn.py        # burned area per province, burn scars
-pipeline/causas.py           # fire causes (Ministry of Environment)
-pipeline/prep_tucuman.py     # hotspots in the sugarcane zone during the harvest (zafra)
-pipeline/prep_v2.py, prep_v4.py, prep_v7.py   # statistics and provincial ranking
-pipeline/v9/render_v9.py --nums   # (v9, current version) prints every number shown on screen
-pipeline/v9/s2_date.py            # Copernicus Sentinel-2 crops for one date (Burruyacú 2025-09-23, Delta 2020-09-23)
-pipeline/v9/build_v9.sh           # parallel frame render + music + assembly
-```
+## Make the video (`harness-rs/`)
 
-Requirements: Python 3.10+, numpy, scipy, Pillow, OpenCV, rasterio, pyproj, ffmpeg.
+Requirements: a Rust toolchain, `build-essential clang libclang-dev nasm pkg-config libx264-dev libfontconfig-dev`,
+and the `ffmpeg` CLI (plus ImageMagick for the thumbnail). Details: `harness-rs/README.md`.
 
-No number is typed by hand in the renderer: all of them are read from the JSON files in `data/`, and `render_v9.py` has an `assert` for every verbal rounding («casi» / "almost", «más de» / "more than") and for every ranking value.
+### 720p drafts
 
-## Rust harness (`harness-rs/`, canonical)
-
-The video is built with `harness-rs/`: everything (prep, facts, render, music, QA) is Rust. See `harness-rs/README.md`.
+Every render is a 1280×720 draft unless you ask for the final cut. Iterate on drafts until the cut is approved:
 
 ```bash
 cd harness-rs && source env.sh && cd stories/incendios-argentina
-cargo run --release -- build            # prep -> facts -> check -> assets -> music -> render -> qa
+cargo run --release -- build            # prep -> facts -> check -> assets -> music -> render (720p) -> qa
+cargo run --release -- check            # readability rules only (text ≥ 48 px, words per beat, hold time, ≤ 60 s)
+cargo run --release -- frame 12.5s      # one frame, for quick looks
 ```
 
-An earlier experimental port lived in `fframes/`; it only covered part of the video and was removed once `harness-rs/`
-rendered the whole video and passed QA.
+### Final 1080p (chunked)
 
-## Python harness (`harness/`, reference)
+A full 1080p render decodes ~2 GB of rasters and can be OOM-killed on a machine whose memory is shared. The final is
+rendered in small, retried, resumable chunks that each load only the assets they draw; the script then joins the parts,
+muxes the score and runs `qa --final`:
+
+```bash
+cd harness-rs && source env.sh && cargo build --release
+scripts/render_final_chunked.sh -n 1785 --tail-from 1332 --tail-step 6 -o out/final_1080p.mp4
+```
+
+(`cargo run --release -- build --final` still works on a machine with enough free memory.)
+
+### QA
+
+`incendios qa <video.mp4> [--final]` writes `build/qa/QA.md` and QA frames: loudness of the MP4 itself (−14 LUFS ±0.5,
+true peak ≤ −1.5 dBTP), duration, resolution, minimum text size and the readability rules.
+
+### Upload copy and thumbnail
+
+```bash
+scripts/encode_youtube.sh out/final_1080p.mp4                    # libx264 CRF 20, yuv420p, faststart, audio copied
+scripts/make_thumbnail.sh out/final_1080p_youtube.mp4 out/thumbnail.jpg --time 15   # 1280×720 from a real frame
+```
+
+The re-encode took the master from 95 MB to 38 MB with no visible loss. The thumbnail is cut from the video itself
+(map on the right, title in Bebas Neue on the left); title, subtitle, colours, frame time and crop are flags.
+
+### Final-delivery checklist
+
+1. 720p drafts until the cut is approved.
+2. Chunked 1080p final (`scripts/render_final_chunked.sh`).
+3. QA pass (`qa --final`): read the report and the QA frames.
+4. YouTube re-encode (`scripts/encode_youtube.sh`).
+5. Thumbnail from a real frame (`scripts/make_thumbnail.sh`).
+6. Upload unlisted from a pseudonymous channel (the contest is anonymous): no real name in the channel, handle,
+   title, description, credits or metadata. Keep a manual upload as the fallback if an automated upload fails.
+7. Fill the submission form.
+
+## Python harness and pipeline (reference)
+
+The Python code below produced v2–v10 and is kept so the numbers can be cross-checked; it is no longer used to render.
+
+### `harness/`
 
 `harness/` is the generic version of this pipeline: a Python package that builds a short video (≤ 60 s) from a
 `story.yaml` (the scenes and their text) and a `facts.py` (every number shown on screen, with an `assert` for every
