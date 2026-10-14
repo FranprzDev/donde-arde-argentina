@@ -79,6 +79,11 @@ person signed off, never to make a failing check pass (today: the credits card, 
 
 ## The fires story: what changed from v10
 
+- **Credits use the contest pseudonym (v15, 2026-10-13).** The contest is anonymous and does not accept AI
+  authorship (AI assistance for code under human direction is allowed), so the two credit rows are now
+  «Autor: FranMC23» and «Código: AI Assistance, bajo supervisión humana»; no real name is drawn on screen. The card
+  drops from 24 to 16 words (the rule would ask 6.6 s); it keeps the approved 6.40 s hold and every other beat, total
+  59.49 s.
 - **Burned-area legend is a map key (v14, 2026-10-13).** «gris = área quemada» named a colour the scars do not show:
   they are a warm sand/ash tint (`SCAR` = 205,190,172, screened over the dark map), and the label itself was drawn in
   a dimmer grey than the legend under it, so it read as a caption rather than a key. It now draws a swatch in the
