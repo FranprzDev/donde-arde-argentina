@@ -285,10 +285,11 @@ impl Incendios {
     fn draw_intro_text(&self, o: &mut Svg, t: f64) {
         let tl = &self.tl;
         if tl.t_txt1 <= t && t < tl.t_spark {
-            // no fade: both lines vanish on the frame of the hard cut
-            let (a, b) = (self.text("intro.sol"), self.text("intro.sol2"));
-            o.slam(TX, 420.0, &a.s, ANTON, a.size, WH, t, a.t0, None, 0.0, false);
-            o.slam(TX, 560.0, &b.s, ANTON, b.size, WH, t, b.t0, None, 0.0, false);
+            // no fade: every line vanishes on the frame of the hard cut
+            for (id, y) in [("intro.sol", 400.0), ("intro.sol2", 520.0), ("intro.sol3", 640.0)] {
+                let x = self.text(id);
+                o.slam(TX, y, &x.s, ANTON, x.size, WH, t, x.t0, None, 0.0, false);
+            }
         }
         if tl.t_nos <= t && t < tl.t_txt2_end + 0.4 {
             let n = self.text("spark.nos");

@@ -76,8 +76,12 @@ The sources/credits card is exempt from the word cap but not from the hold rule 
 
 ## The fires story: what changed from v10
 
+- **New opening (2026-10-13).** «EL SOL QUEMA, / PERO NO PROVOCA INCENDIOS.» (7 words, 3.45 s) → hard cut with the
+  match → the spark and «EL HUMANO, SÍ.» + «9 DE CADA 10 CON CAUSA CONOCIDA» (10 words, 4.50 s). The 14-year timelapse
+  ignites from that spark 0.5 s later, while the line is still on screen, so the video runs on from it without a pause.
+  Every later mark moves 0.40 s earlier (total 59.49 s).
 - **Closing card tradeoff.** v10 gave the sources 3.14 s for 45 words. The new card has short source names in a
-  label/value grid plus the two credits verbatim: 24 words → 9.4 s. To fit inside 60 s: «EL SOL CALIENTA.» enters
+  label/value grid plus the two credits verbatim: 24 words → 9.4 s. To fit inside 60 s: the first sun line enters
   0.55 s earlier; the scar and the «CASI 12 TUCUMANES» beats became one card (the line «QUEMADAS: CASI 1 DE CADA 10
   DEL PAÍS» is cut); every card is held exactly what the rule asks; flights, zooms and the ash pause are 15–20 %
   shorter. Long source names (IGN, Wikimedia flags, EEAOC RA 370, product ids) are in `story.toml` comments and the

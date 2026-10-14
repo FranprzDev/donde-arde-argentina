@@ -48,8 +48,12 @@ reference_points = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/po
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # Timeline. Plain numbers in [params]; [marks] are expressions over params, other marks and facts (any order).
+# Opening (Francisco, 2026-10-13): «EL SOL QUEMA, / PERO NO PROVOCA INCENDIOS.» (7 words → 3.45 s) → hard cut with the
+# match → the spark (first VIIRS hotspot) and «EL HUMANO, SÍ.» + «9 DE CADA 10 CON CAUSA CONOCIDA» (10 words → 4.50 s),
+# with the timelapse igniting from that spark 0.5 s later, so the rest of the video starts from that line with no pause.
 # v10 timing, except (to give the closing card the reading time it needs inside 60 s; see README "Closing card tradeoff"):
-#   * «EL SOL CALIENTA.» enters 0.55 s earlier (over the end of the globe shot), so the hard cut lands at 7.20 s;
+#   * the first sun line enters 0.55 s earlier than in v10 (over the end of the globe shot); with the shorter opening copy
+#     (see above) the hard cut now lands at 6.85 s;
 #   * the scar beat and the «= CASI 12 TUCUMANES» beat are one card: «26,6 MILLONES DE HA» / «QUEMADAS = CASI 12 TUCUMANES»
 #     (the line «QUEMADAS: CASI 1 DE CADA 10 DEL PAÍS» is cut);
 #   * every text is held exactly what the reading rule asks (v10 had 0.03–0.35 s of slack per card);
@@ -58,10 +62,10 @@ reference_points = "${FIRES_RAW:-/workspace/work/contar-con-datos-fuego}/data/po
 SPACE_K = 1.25
 T_HOOK0 = 0.45
 T_TXT1 = 3.40
-T_TXT1B = 4.45
-T_COOL = 6.40
-NOS_DELAY = 0.12
-LAND_DELAY = 0.55
+T_TXT1B = 3.95            # «PERO NO PROVOCA INCENDIOS.» 0.55 s after «EL SOL QUEMA,»
+T_COOL = 6.25             # the sun's heat on the map fades just before the cut
+NOS_DELAY = 0.06          # «EL HUMANO, SÍ.» lands with the spark (no pause)
+LAND_DELAY = 0.50         # the 14-year timelapse ignites from the spark while «EL HUMANO, SÍ.» is on screen
 WARP_A = 0.036            # s per month, Jan-Dec 2012
 WARP_B = 0.0215           # s per month, 2013-2024
 WARP_C = 0.030            # s per month, 2025
@@ -85,9 +89,9 @@ CL_FILL = 0.50
 T_X0 = "3.2 * SPACE_K"
 T_MAP = "3.7 * SPACE_K"
 T_HOOK1 = "T_TXT1 - 0.10"
-T_SPARK = "max(T_TXT1 + 3.80, T_TXT1B + 2.75)"
+T_SPARK = "max(T_TXT1 + 3.45, T_TXT1B + 2.50)"
 T_NOS = "T_SPARK + NOS_DELAY"
-T_TXT2_END = "T_NOS + 4.15"
+T_TXT2_END = "T_NOS + 4.50"
 T_LAND = "T_SPARK + LAND_DELAY"
 T_A1 = "T_LAND + 12 * WARP_A + 144 * WARP_B + 12 * WARP_C"
 T_ASH = "T_A1 + ASH_PAUSE"
@@ -209,7 +213,7 @@ end = "T_SPARK"
   card = "hook"
   [[beat.text]]
   id = "sol"
-  template = "EL SOL CALIENTA."
+  template = "EL SOL QUEMA,"
   size = 100
   font = "anton"
   t0 = "T_TXT1"
@@ -217,10 +221,19 @@ end = "T_SPARK"
   card = "sol"
   [[beat.text]]
   id = "sol2"
-  template = "EL SOL NO PRENDE FUEGO."
+  template = "PERO NO PROVOCA"
   size = 100
   font = "anton"
   t0 = "T_TXT1B"
+  t1 = "T_SPARK"
+  card = "sol"
+  # the second line wraps so it stays left of the map (on one line it ran into Argentina)
+  [[beat.text]]
+  id = "sol3"
+  template = "INCENDIOS."
+  size = 100
+  font = "anton"
+  t0 = "T_TXT1B + 0.08"
   t1 = "T_SPARK"
   card = "sol"
 
@@ -231,7 +244,7 @@ start = "T_SPARK"
 end = "T_ASH"
   [[beat.text]]
   id = "nos"
-  template = "NOSOTROS SÍ."
+  template = "EL HUMANO, SÍ."
   size = 150
   font = "anton"
   t0 = "T_NOS"

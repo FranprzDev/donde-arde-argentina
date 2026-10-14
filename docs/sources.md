@@ -1,3 +1,22 @@
+# Current cut — harness-rs (2026-10-13)
+
+Numbers are computed by `harness-rs` (`incendios prep` + `incendios facts`) and guarded by the 15 `[[assert]]` in
+`story.toml`; `incendios verify` compares them with the Python v10 outputs. An independent re-computation from the raw
+files (FIRMS CSVs, UMD MCD64A1 windows, IGN/INDEC boundaries, causes CSV, EEAOC table) on 2026-10-13 matched every
+on-screen figure. Two facts a reader needs to reproduce the hotspot counts:
+
+* **Province of a hotspot:** INDEC Census 2022 province polygons (`data/natgeo_v7.json`); a hotspot that falls outside
+  every polygon (rivers, Delta islands, coast) goes to the **nearest** province. Entre Ríos gets 477 such hotspots over
+  2012–2025, which is why «37.506» needs this rule (37.382 without it; 37.580 with the IGN outline). «CASI 7 VECES»
+  holds with every variant (6.96–7.00).
+* **Boundaries:** hotspots and MODIS use INDEC polygons; Tucumán's area and its departments use IGN (Georef). The sources
+  card says «INDEC»; the form's sources field lists both.
+
+The opening line changed to «EL SOL QUEMA, / PERO NO PROVOCA INCENDIOS.» → «EL HUMANO, SÍ.»; the figure under it is the
+same «9 DE CADA 10 CON CAUSA CONOCIDA» (105.576 / 117.034 = 90.2 %, 47.9 % without a determined cause).
+
+---
+
 # Sources and verification of every on-screen number — v9 «¿Dónde arde Argentina?»
 
 The video is in Spanish: on-screen strings are quoted **verbatim in Spanish** («…»).
