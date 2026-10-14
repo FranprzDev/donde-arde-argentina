@@ -143,7 +143,7 @@ pub fn run(story: &Story, facts: &Facts) -> Result<master::Loudness> {
     let (stu, ser, spa) = (tl.stops[0], tl.stops[1], tl.stops[2]);
     let (trk, trk2, trke, tcl, tsrc) = (tl.t_rk, tl.t_rk2, tl.t_rk_end, tl.t_cl, tl.t_src);
     // ---- 1. drone
-    let dr = sc.env(&[(0.0, 0.0), (0.4 * k, 0.55), (tl.t_cool, 0.8), (tsp, 0.35), (tl_ - 0.01, 0.7), (tl_, 1.0), (ta1, 1.0), (tash, 0.6), (tscar, 0.3), (td1, 0.5), (trk2, 0.8), (trke, 0.75), (stu.0, 0.85), (stu.1, 0.8), (ser.0, 0.85), (ser.1, 0.8), (spa.0, 1.0), (spa.1, 0.9), (tcl, 1.0), (tsrc, 0.6), (total, 0.0)]);
+    let dr = sc.env(&[(0.0, 0.0), (0.4 * k, 0.55), (tl.t_cool, 0.8), (tsp, 0.35), (tl_ - 0.01, 0.7), (tl_, 1.0), (ta1, 1.0), (tash, 0.6), (tscar, 0.3), (td1, 0.5), (trk2, 0.8), (trke, 0.75), (stu.0, 0.85), (stu.1, 0.8), (ser.0, 0.85), (ser.1, 0.8), (spa.0, 1.0), (spa.1, 0.9), (tcl, 1.0), (tsrc, 0.7), (total - 1.2, 0.6), (total, 0.0)]);
     let nz = sc.noise(n);
     let rumble = dsp::filt(&nz, 4, Kind::Low(90.0), sc.sr);
     for i in 0..n {
@@ -206,11 +206,15 @@ pub fn run(story: &Story, facts: &Facts) -> Result<master::Loudness> {
     sc.add(ta1, &p, 1.1, 0.0, 0.7);
     let p = pad_voice(&mut sc, &[38.0, 45.0, 50.0, 53.0], td1 - tash + 1.0, 0.6, 1.0, 2.0);
     sc.add(tash, &p, 1.0, 0.0, 0.8);
-    chord_seq(&mut sc, td1, tcl, &[dm, bb, gm, aa], 2.4, 0.9, 1.0);
-    let p = pad_voice(&mut sc, &[38.0, 50.0, 57.0, 62.0, 65.0, 69.0], tsrc - tcl + 2.0, 1.4, 0.6, 3.0);
+    chord_seq(&mut sc, td1, tcl, &[dm.clone(), bb.clone(), gm, aa], 2.4, 0.9, 1.0);
+    // the close pad and choir now sustain under the whole credits card and ring out with the master fade (v12 let
+    // them die ~2 s into the card, which left the last seconds near-silent)
+    let p = pad_voice(&mut sc, &[38.0, 50.0, 57.0, 62.0, 65.0, 69.0], total - tcl - 1.0, 1.4, 0.6, 3.0);
     sc.add(tcl, &p, 1.4, 0.0, 0.7);
-    let c = choir(&mut sc, &[57.0, 62.0, 65.0, 69.0], tsrc - tcl + 1.6, 1.0, 3.0);
+    let c = choir(&mut sc, &[57.0, 62.0, 65.0, 69.0], total - tcl - 1.0, 1.0, 3.0);
     sc.add(tcl, &c, 0.9, 0.0, 0.9);
+    // a slow Dm-Bb bed under the credits so the music carries to the last frame
+    chord_seq(&mut sc, tsrc, total, &[dm, bb], 3.2, 0.55, 0.8);
     let c = choir(&mut sc, &[50.0, 57.0, 62.0, 65.0], spa.1 - spa.0, 1.5, 2.0);
     sc.add(spa.0, &c, 0.55, 0.0, 0.9);
     // ---- 4. fire crackle following the hotspots on screen

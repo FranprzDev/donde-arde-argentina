@@ -66,9 +66,11 @@ T_TXT1B = 3.95            # «PERO NO PROVOCA INCENDIOS.» 0.55 s after «EL SOL
 T_COOL = 6.25             # the sun's heat on the map fades just before the cut
 NOS_DELAY = 0.06          # «EL HUMANO, SÍ.» lands with the spark (no pause)
 LAND_DELAY = 0.50         # the 14-year timelapse ignites from the spark while «EL HUMANO, SÍ.» is on screen
-WARP_A = 0.036            # s per month, Jan-Dec 2012
-WARP_B = 0.0215           # s per month, 2013-2024
-WARP_C = 0.030            # s per month, 2025
+# v13 (Francisco, 2026-10-13): the timelapse is 3.0 s longer (3.89 s -> 6.89 s), every month 1.7716x slower, paid for
+# by the 3.0 s cut from the credits card (see the [[beat]] "fuentes" hold_exception).
+WARP_A = 0.06378          # s per month, Jan-Dec 2012 (v12: 0.036)
+WARP_B = 0.03809          # s per month, 2013-2024 (v12: 0.0215)
+WARP_C = 0.05315          # s per month, 2025 (v12: 0.030)
 ASH_PAUSE = 0.20
 SCAR_DELAY = 0.35
 RK_STEP = 0.025
@@ -84,6 +86,7 @@ ZHOLD_TU = 2.40
 ZHOLD_ER = 3.00
 CL_ZOOM = 0.40
 CL_FILL = 0.50
+CREDITS_HOLD = 6.40       # v13: the credits card (hold_exception on the "fuentes" beat; v12: 9.40)
 
 [marks]
 T_X0 = "3.2 * SPACE_K"
@@ -117,7 +120,7 @@ T_CL = "S_PA1 + CL_ZOOM"
 CL_DIP = "T_CL + 0.40"
 CL_L2 = "T_CL + CL_FILL"
 T_SRC = "CL_L2 + 3.10 + 0.30"
-TOTAL = "T_SRC + 9.40"
+TOTAL = "T_SRC + CREDITS_HOLD"
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # Fact asserts: every verbal rounding on screen is guarded here (the build stops if the data stops supporting the words).
@@ -633,8 +636,9 @@ end = "T_SRC"
   card = "close"
 
 # The closing card: short source names in a label/value grid, then the credits verbatim. It is not word-capped (a reference
-# card) but it does meet the hold rule: 24 words -> 0.35 x 24 + 1 = 9.4 s. Its texts are generated from [[source]] and
-# [[credit]] ("label value" per row), so the rule check reads exactly what is drawn.
+# card). The hold rule asks 24 words -> 0.35 x 24 + 1 = 9.4 s; since v13 this one card is held 6.4 s under an exception
+# Francisco approved (the static credits read as dead air; the 3 s went to the timelapse). Its texts are generated from
+# [[source]] and [[credit]] ("label value" per row), so the rule check reads exactly what is drawn.
 [[beat]]
 id = "fuentes"
 kind = "sources"
@@ -642,6 +646,10 @@ start = "T_SRC"
 end = "TOTAL"
 exempt_words = true
 card_size = 52
+  [beat.hold_exception]
+  hold = 6.40
+  approved_by = "Francisco Perez, 2026-10-13"
+  why = "the static credits read as dead air at the end; 3.0 s moved from this card to the fire timelapse"
 
 [[source]]
 label = "Satélites"

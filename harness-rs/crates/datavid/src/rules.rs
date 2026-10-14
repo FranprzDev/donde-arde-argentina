@@ -10,6 +10,10 @@
 //!    the rule on its own words from its own entrance;
 //! 4. the video is at most `max_duration` seconds long.
 //!
+//! A beat may carry `[beat.hold_exception]` (hold, approved_by, why): its cards then have to meet that hold instead of
+//! rule 3. It exists for an editorial call a person signed off (v13: the credits card), never to make a check pass; the
+//! report keeps the rule's own figure next to the approved one and names who approved it.
+//!
 //! Words are whitespace-separated tokens with at least one letter or digit ("·", "=", "%", "&" alone do not count;
 //! "26,6" is one word).
 use crate::story::{Beat, RulesCfg, Story};
@@ -35,6 +39,8 @@ pub struct Row {
     pub hold: f64,
     pub need: f64,
     pub ok: bool,
+    /// the approved hold and who approved it, when the beat has a hold_exception
+    pub exception: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -50,6 +56,14 @@ pub struct Report {
 fn max_words_at_once(b: &Beat) -> usize {
     let counted: Vec<_> = b.texts.iter().filter(|t| !t.label).collect();
     counted.iter().map(|t| counted.iter().filter(|o| o.t0 <= t.t0 && t.t0 < o.t1).map(|o| words(&o.s)).sum()).max().unwrap_or(0)
+}
+
+/// The hold a card must meet: the rule's own figure, or the approved exception when the beat has one.
+fn req_hold(b: &Beat, rule_need: f64) -> f64 {
+    match &b.hold_exception {
+        Some(e) => e.hold.min(rule_need),
+        None => rule_need,
+    }
 }
 
 /// Evaluate every rule; `Report::problems` lists what is broken (empty = pass).
@@ -91,14 +105,16 @@ pub fn evaluate(story: &Story) -> Report {
             let t0 = ts.iter().map(|t| t.t0).fold(f64::MAX, f64::min);
             let t1 = ts.iter().map(|t| t.t1).fold(f64::MIN, f64::max);
             let nd = need(r, nw);
-            let ok = t1 - t0 + tol >= nd;
-            rows.push(Row { beat: b.id.clone(), card: c.clone(), text: ts.iter().map(|t| t.s.clone()).collect::<Vec<_>>().join(" / "), words: nw, t0, t1, hold: t1 - t0, need: nd, ok });
+            let req = req_hold(b, nd);
+            let ok = t1 - t0 + tol >= req;
+            let exception = b.hold_exception.as_ref().map(|e| format!("approved {:.2} s ({}: {})", e.hold, e.approved_by, e.why));
+            rows.push(Row { beat: b.id.clone(), card: c.clone(), text: ts.iter().map(|t| t.s.clone()).collect::<Vec<_>>().join(" / "), words: nw, t0, t1, hold: t1 - t0, need: nd, ok, exception });
             if !ok {
                 probs.push(format!("beat '{}' card '{c}': {nw} words on screen {:.2} s, need {nd:.2} s ({} s/word + {} s, min {} s). Lengthen the beat or cut words; never speed text up.", b.id, t1 - t0, r.sec_per_word, r.base_hold, r.min_hold));
             }
             if ts.len() > 1 {
                 for t in &ts {
-                    let nd1 = need(r, words(&t.s));
+                    let nd1 = req_hold(b, need(r, words(&t.s)));
                     if t.t1 - t.t0 + tol < nd1 {
                         probs.push(format!("beat '{}' text '{}' («{}»): on screen {:.2} s from its own entrance, needs {nd1:.2} s", b.id, t.id, t.s, t.t1 - t.t0));
                     }
@@ -126,7 +142,12 @@ impl Report {
     pub fn table(&self) -> String {
         let mut s = String::from("| beat | card | words | on screen (s) | needs (s) | ok |\n|---|---|---|---|---|---|\n");
         for r in &self.rows {
-            s.push_str(&format!("| {} | {} | {} | {:.2} → {:.2} = {:.2} | {:.2} | {} |\n", r.beat, r.text.replace('|', "/"), r.words, r.t0, r.t1, r.hold, r.need, if r.ok { "yes" } else { "**NO**" }));
+            let ok = match (&r.exception, r.ok) {
+                (_, false) => "**NO**".to_string(),
+                (Some(e), true) if r.hold + 0.011 < r.need => format!("yes, **exception**: {e}"),
+                _ => "yes".to_string(),
+            };
+            s.push_str(&format!("| {} | {} | {} | {:.2} → {:.2} = {:.2} | {:.2} | {} |\n", r.beat, r.text.replace('|', "/"), r.words, r.t0, r.t1, r.hold, r.need, ok));
         }
         s.push_str("\n| beat | most prose words on screen at once | ok |\n|---|---|---|\n");
         for (b, n, ok) in &self.words_at_once {
@@ -140,6 +161,32 @@ impl Report {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::story::{HoldException, Text};
+
+    fn card_beat(hold: f64, exception: Option<f64>) -> Beat {
+        let text = Text { id: "row0".into(), beat: "fuentes".into(), s: "uno dos tres cuatro cinco seis".into(), size: 52.0, font: String::new(), t0: 0.0, t1: hold, card: "card".into(), label: false };
+        Beat {
+            id: "fuentes".into(),
+            kind: "sources".into(),
+            start: 0.0,
+            end: hold,
+            exempt_words: true,
+            hold_exception: exception.map(|h| HoldException { hold: h, approved_by: "test".into(), why: "test".into() }),
+            texts: vec![text],
+        }
+    }
+    #[test]
+    fn hold_exception_lowers_only_its_beat() {
+        // 6 words -> the rule asks 0.35 x 6 + 1 = 3.1 s
+        assert!((need(&RulesCfg::default(), 6) - 3.1).abs() < 1e-9);
+        let b = card_beat(2.6, None);
+        assert!((req_hold(&b, 3.1) - 3.1).abs() < 1e-9);
+        let b = card_beat(2.6, Some(2.5));
+        assert!((req_hold(&b, 3.1) - 2.5).abs() < 1e-9);
+        // an exception never raises the bar above the rule
+        let b = card_beat(2.6, Some(9.0));
+        assert!((req_hold(&b, 3.1) - 3.1).abs() < 1e-9);
+    }
     #[test]
     fn counts_like_v10() {
         assert_eq!(words("5 PROVINCIAS = 53 %"), 3);

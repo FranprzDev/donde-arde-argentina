@@ -72,16 +72,26 @@ Outputs land in `build/` (`facts.json`, `asserts.txt`, `readability.md`, `assets
 - every card held ≥ 0.35 s per word + 1 s (min 2.5 s), measured from its first text's entrance to the fade;
 - total ≤ 60 s; audio at −14 LUFS ±0.5, true peak ≤ −1.5 dBTP (measured on the MP4 itself).
 
-The sources/credits card is exempt from the word cap but not from the hold rule or the size rule.
+The sources/credits card is exempt from the word cap but not from the size rule. A beat can carry
+`[beat.hold_exception]` (`hold`, `approved_by`, `why`): its cards then meet that hold instead of the reading rule, and
+`check`/`qa` print the rule's own figure next to the approved one with who approved it. It is for an editorial call a
+person signed off, never to make a failing check pass (today: the credits card, see below).
 
 ## The fires story: what changed from v10
 
+- **Longer timelapse, shorter credits (v13, 2026-10-13).** In v12 the credits card sat still for 9.4 s (50.1–59.5 s)
+  while the score had already faded to near silence from ~54 s: it read as dead air. Francisco approved cutting that
+  card to 6.4 s (a `hold_exception`; the rule would ask 9.4 s for its 24 words) and giving the 3.0 s to the 14-year
+  timelapse: every month plays 1.7716× slower (`WARP_A/B/C` 0.036/0.0215/0.030 → 0.06378/0.03809/0.05315 s per month),
+  so the timelapse runs 7.35–14.24 s instead of 7.35–11.24 s. Same data, same months, same year labels; every later
+  mark moves 3.0 s later and the total stays 59.49 s. The close pad and choir now sustain under the whole credits card
+  and a slow Dm–Bb bed carries the music to the last frame.
 - **New opening (2026-10-13).** «EL SOL QUEMA, / PERO NO PROVOCA INCENDIOS.» (7 words, 3.45 s) → hard cut with the
   match → the spark and «EL HUMANO, SÍ.» + «9 DE CADA 10 CON CAUSA CONOCIDA» (10 words, 4.50 s). The 14-year timelapse
   ignites from that spark 0.5 s later, while the line is still on screen, so the video runs on from it without a pause.
   Every later mark moves 0.40 s earlier (total 59.49 s).
 - **Closing card tradeoff.** v10 gave the sources 3.14 s for 45 words. The new card has short source names in a
-  label/value grid plus the two credits verbatim: 24 words → 9.4 s. To fit inside 60 s: the first sun line enters
+  label/value grid plus the two credits verbatim: 24 words → 9.4 s (6.4 s since v13, approved exception). To fit inside 60 s: the first sun line enters
   0.55 s earlier; the scar and the «CASI 12 TUCUMANES» beats became one card (the line «QUEMADAS: CASI 1 DE CADA 10
   DEL PAÍS» is cut); every card is held exactly what the rule asks; flights, zooms and the ash pause are 15–20 %
   shorter. Long source names (IGN, Wikimedia flags, EEAOC RA 370, product ids) are in `story.toml` comments and the
@@ -106,7 +116,7 @@ parallel chunks would only double the memory.
 
 ### Where the time goes
 
-The 14-year timelapse (≈ 8–12 s) is the expensive part: up to ~50 monthly fire rasters screened together plus a
+The 14-year timelapse (≈ 7–14 s since v13) is the expensive part: up to ~50 monthly fire rasters screened together plus a
 full-frame bloom, about 2 s per 1080p frame on 2 cores; the rest of the video costs ~0.15 s per frame. The fire layer
 and the closing embers draw their rasters once and add the bloom in the same filter (`datavid::svg::bloom_screen`);
 before, each group was drawn twice (sharp copy + blurred copy).
