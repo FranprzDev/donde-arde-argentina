@@ -7,6 +7,7 @@
 //! * copies of the Sentinel-2 crops.
 //! Writes build/assets/*.png|jpg and build/assets.json (bounding boxes and timings).
 use crate::prep::{derived, modis, read_json, viirs};
+use crate::render::SCAR;
 use anyhow::Result;
 use datavid::raster::{Img, blur, light_rgba, lut, write_png, write_png_gray};
 use datavid::{Facts, Story};
@@ -199,7 +200,7 @@ pub fn run(story: &Story, _facts: &Facts) -> Result<()> {
     let save_scar = |name: &str, im: &Img| -> Result<()> {
         let s55: Vec<f32> = im.px.iter().map(|v| (v / 255.0).clamp(0.0, 1.0).powf(0.55)).collect();
         save_dark(&out, &format!("scar_dark_{name}"), im.w, im.h, &s55.iter().map(|s| 0.6 * s).collect::<Vec<_>>())?;
-        save_light(&out, &format!("scar_col_{name}"), im.w, im.h, &s55.iter().map(|s| [s * 205.0, s * 190.0, s * 172.0]).collect::<Vec<_>>())?;
+        save_light(&out, &format!("scar_col_{name}"), im.w, im.h, &s55.iter().map(|s| SCAR.map(|c| s * c as f32)).collect::<Vec<_>>())?;
         save_light(&out, &format!("scar_warm_{name}"), im.w, im.h, &s55.iter().map(|s| [s * 235.0, s * 110.0, s * 45.0]).collect::<Vec<_>>())
     };
     for k in 1..=3 {

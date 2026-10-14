@@ -27,7 +27,8 @@ pub const AM: Rgb = [255, 176, 60];
 pub const OR: Rgb = [255, 110, 30];
 pub const RD: Rgb = [255, 64, 40];
 pub const HOT: Rgb = [255, 226, 160];
-pub const ASH: Rgb = [150, 142, 134];
+/// the MODIS scar tint (`scar_col_*` rasters at full intensity); the burned-area legend swatch uses the same colour
+pub const SCAR: Rgb = [205, 190, 172];
 const COS: f64 = crate::timeline::COS;
 
 pub const ANTON: Font = Font { family: "Anton", weight: 400, cap: 1760.0 / 2048.0 };
@@ -250,7 +251,7 @@ impl Incendios {
         let ui = clamp((t - tl.t_land) / 0.4) * (1.0 - clamp((t - tl.t_ash + 0.2) / 0.5));
         self.draw_year(&mut o, t, ui);
         self.draw_timeline(&mut o, t, ui);
-        self.draw_legend(&mut o, t, sk);
+        self.draw_legend(&mut o, t, sk, frame, ctx);
         self.draw_hook(&mut o, t);
         self.draw_intro_text(&mut o, t);
         if tl.t_scar - 0.05 <= t && t < tl.t_tu1 {
@@ -298,7 +299,7 @@ impl Incendios {
         }
     }
 
-    fn draw_legend(&self, o: &mut Svg, t: f64, sk: f64) {
+    fn draw_legend<'a>(&'a self, o: &mut Svg, t: f64, sk: f64, frame: &mut Frame, ctx: &FFramesContext<'a, '_>) {
         let tl = &self.tl;
         let mut la = clamp((t - tl.t_land - 0.3) / 0.4) * (1.0 - clamp((t - tl.t_cl + 0.3) / 0.4)) * (1.0 - clamp((t - tl.t_rk) / 0.3) * (1.0 - clamp((t - tl.t_rk_end) / 0.4)));
         if let Some((g0, g1)) = self.legend_gap {
@@ -312,7 +313,13 @@ impl Incendios {
             o.text_a(W - 80.0, H - 60.0, &l1.s, INTER6, l1.size, MU, la, 1.0, 0.0, "end");
             if sk > 0.0 {
                 let l2 = self.text("scar.legend2");
-                o.text_a(W - 80.0, H - 122.0, &l2.s, INTER6, l2.size, ASH, la * sk, 1.0, 0.0, "end");
+                // a map key, not a caption: a swatch in the scar tint (at the 0.75 it reads on the map), then the label in the same muted tone as legend1
+                let (y, a) = (H - 122.0, la * sk);
+                // text_width comes out ~14 px short of the drawn Inter 600 line here, hence the 32 px gap (≈ 18 px seen)
+                let lw = self.text_w(frame, ctx, INTER6, l2.size, &l2.s);
+                let sw = (l2.size * INTER6.cap).round();
+                let _ = write!(o.s, r#"<rect x="{:.1}" y="{:.1}" width="{sw}" height="{sw}" rx="4" fill="{}" opacity="{}"/>"#, W - 80.0 - lw - 32.0 - sw, y - sw, svg::rgb(SCAR), op(0.75 * a));
+                o.text_a(W - 80.0, y, &l2.s, INTER6, l2.size, MU, a, 1.0, 0.0, "end");
             }
         }
     }

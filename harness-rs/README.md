@@ -79,6 +79,12 @@ person signed off, never to make a failing check pass (today: the credits card, 
 
 ## The fires story: what changed from v10
 
+- **Burned-area legend is a map key (v14, 2026-10-13).** «gris = área quemada» named a colour the scars do not show:
+  they are a warm sand/ash tint (`SCAR` = 205,190,172, screened over the dark map), and the label itself was drawn in
+  a dimmer grey than the legend under it, so it read as a caption rather than a key. It now draws a swatch in the
+  scar tint (the same `SCAR` constant the `scar_col_*` rasters use) next to «área quemada {y0}–{y1} (MODIS)», in the
+  same tone and size as «1 punto = 1 foco de calor (satélite)». The swatch also tells the scars apart from the
+  hotspot dots, whose legend is still on screen during the scar beat. Same timing (T_SCAR → T_RK), same 48 px.
 - **Longer timelapse, shorter credits (v13, 2026-10-13).** In v12 the credits card sat still for 9.4 s (50.1–59.5 s)
   while the score had already faded to near silence from ~54 s: it read as dead air. Francisco approved cutting that
   card to 6.4 s (a `hold_exception`; the rule would ask 9.4 s for its 24 words) and giving the 3.0 s to the 14-year
