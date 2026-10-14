@@ -1,3 +1,23 @@
+# Current cut — harness-rs (2026-10-13, 1280×720 draft)
+
+The current video is rendered by `harness-rs/stories/incendios-argentina` (all Rust); its `story.toml` is the source of
+truth for every on-screen text and time. The sections below this one describe v9, the last Python version.
+
+**New opening (Francisco, 2026-10-13):**
+
+| Time (s) | Picture | On-screen text (words → time on screen) | Sound |
+|---|---|---|---|
+| 0.45–3.30 | Sun → rays → Earth → Argentina | «¿DÓNDE ARDE / ARGENTINA?» (3 → 2.85 s) | solar roar |
+| 3.40–6.85 | Flat map: rays land, Argentina heats up and cools (heat fades from 6.25) | «EL SOL QUEMA,» (3.40) / «PERO NO PROVOCA» / «INCENDIOS.» (3.95, three lines so the text stays left of the map) — 7 words → 3.45 s, 100 px | warm pad until the cut |
+| 6.85 | **Hard cut**: text out, map near black, the spark (the first VIIRS hotspot, Jan 2012) | — | the music drops; procedural match strike |
+| 6.91–11.41 | The spark; at 7.35 it ignites the 14-year VIIRS timelapse (no pause): big year + monthly curve | «EL HUMANO, SÍ.» (150 px) + «9 DE CADA 10 CON CAUSA CONOCIDA» (66 px) — 10 words → 4.50 s | taiko on «EL HUMANO», riser, hit at 7.35 |
+
+The rest follows the v10 order (scar + «QUEMADAS = CASI 12 TUCUMANES», top 5, Tucumán + Burruyacú Sentinel-2, Entre Ríos
+2020 + Delta Sentinel-2, Comarca Andina, close, sources/credits card), every later mark shifted 0.40 s earlier. Total 59.49 s.
+«9 DE CADA 10» keeps its assert (`hum_10 == 9`: 90.2 % human among fires with a known cause, Min. Ambiente 1993–2019).
+
+---
+
 # v9 — «¿Dónde arde Argentina?» (Visual story, 59.77 s, 1080p30)
 
 The video is in Spanish: every on-screen string below is quoted **verbatim in Spanish** («…»), exactly as it appears on screen.

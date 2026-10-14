@@ -1,5 +1,6 @@
 //! `incendios qa [video.mp4]`: checks the encoded MP4 and writes build/qa/QA.md + qa.json + QA frames.
-//! * container: duration ≤ max, 1920×1080, 30 fps, one AAC audio stream (ffprobe);
+//! * container: duration ≤ max, size of the requested resolution (draft 1280×720 / final 1920×1080), 30 fps, one AAC
+//!   audio stream (ffprobe);
 //! * loudness of the MP4's own audio (decoded by the ffmpeg CLI, measured in Rust with EBU R128): integrated LUFS within
 //!   tolerance of the target and true peak ≤ the ceiling;
 //! * readability rules (datavid::rules) and fact asserts (build/asserts.txt);
@@ -13,7 +14,8 @@ use std::path::Path;
 use std::process::Command;
 
 
-pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
+/// `res`: the resolution the video was rendered at (drafts are 1280×720, `--final` is the design canvas)
+pub fn run(story: &Story, _facts: &Facts, video: &Path, res: datavid::story::Resolution) -> Result<()> {
     let qa_dir = story.build_dir().join("qa");
     std::fs::create_dir_all(&qa_dir)?;
     let mut r = Report::new(&story.file.story.title);
@@ -27,7 +29,8 @@ pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
     let maxd = story.file.video.max_duration;
     r.section("Video file", &format!("`{}`", video.display()));
     r.check("duration", dur <= maxd + 1e-3, &format!("{dur:.3} s (max {maxd} s)"));
-    r.check("size", v["width"] == story.file.video.width && v["height"] == story.file.video.height, &format!("{}×{}", v["width"], v["height"]));
+    let (ew, eh) = res.size(&story.file.video);
+    r.check("size", v["width"] == ew && v["height"] == eh, &format!("{}×{} (expected {ew}×{eh}, {res:?})", v["width"], v["height"]));
     r.check("fps", v["r_frame_rate"] == format!("{}/1", story.file.video.fps), &format!("{}", v["r_frame_rate"]));
     r.check("audio stream", !a.is_null(), &format!("{} {} Hz, {} ch", a["codec_name"], a["sample_rate"].as_str().unwrap_or("?"), a["channels"]));
     r.put("container", json!({"duration_s": dur, "video": v, "audio": a}));
@@ -93,7 +96,7 @@ pub fn run(story: &Story, _facts: &Facts, video: &Path) -> Result<()> {
     let sub = qa_dir.join("assets");
     let probe_out = qa_dir.join("probe");
     std::fs::create_dir_all(&probe_out)?;
-    crate::render::subset_assets(story, &["frame", &tlist, "--scale", "0.125", "-o", &probe_out.display().to_string()], &sub)?;
+    crate::render::subset_assets(story, &["frame", &tlist, "--scale", "0.125", "-o", &probe_out.display().to_string()], &sub, 1.0)?;
     let _ = std::fs::remove_dir_all(&probe_out);
     let exe = std::env::current_exe()?;
     let out = Command::new(exe).args(["frame", &tlist, "-o", &tmp.display().to_string()]).env("INCENDIOS_DUMP_SVG", &src_svg).env("INCENDIOS_ASSETS", &sub).env("INCENDIOS_NO_AUDIO", "1").output()?;

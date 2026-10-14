@@ -31,6 +31,23 @@ cargo run --release -- build                    # prep -> facts -> check -> asse
 ```
 
 Or step by step: `prep`, `verify`, `facts`, `check`, `assets`, `music`, `render -o out.mp4`, `qa out.mp4`.
+
+### Resolution: drafts first
+
+Every render is a **1280×720 draft** unless you ask for the final cut:
+
+```bash
+cargo run --release -- build              # 1280×720 draft (default)
+cargo run --release -- build --final      # 1920×1080, only once the cut is approved
+cargo run --release -- render -o out.mp4 --final
+DATAVID_FINAL=1 cargo run --release -- build
+```
+
+The story is always laid out on the design canvas (`[video] width/height`, 1920×1080): positions, font sizes and the
+readability rules (≥ 48 px) are in design pixels; only the output is scaled (`[video] draft_height`, default 720).
+`qa` checks the file against the resolution you asked for (pass the same `--final` to `qa`). A draft render also links
+each chunk to PNG copies pre-scaled to the draft size (`build/assets_draft/`, rebuilt when a source raster is newer),
+so a chunk decodes ~44 % of the pixels.
 Every fframes command works too: `frame 12.5s`, `strip all -n 12`, `svg 30s`, `audio analyze`.
 Outputs land in `build/` (`facts.json`, `asserts.txt`, `readability.md`, `assets/`, `qa/QA.md` and QA frames).
 
@@ -59,8 +76,12 @@ The sources/credits card is exempt from the word cap but not from the hold rule 
 
 ## The fires story: what changed from v10
 
+- **New opening (2026-10-13).** «EL SOL QUEMA, / PERO NO PROVOCA INCENDIOS.» (7 words, 3.45 s) → hard cut with the
+  match → the spark and «EL HUMANO, SÍ.» + «9 DE CADA 10 CON CAUSA CONOCIDA» (10 words, 4.50 s). The 14-year timelapse
+  ignites from that spark 0.5 s later, while the line is still on screen, so the video runs on from it without a pause.
+  Every later mark moves 0.40 s earlier (total 59.49 s).
 - **Closing card tradeoff.** v10 gave the sources 3.14 s for 45 words. The new card has short source names in a
-  label/value grid plus the two credits verbatim: 24 words → 9.4 s. To fit inside 60 s: «EL SOL CALIENTA.» enters
+  label/value grid plus the two credits verbatim: 24 words → 9.4 s. To fit inside 60 s: the first sun line enters
   0.55 s earlier; the scar and the «CASI 12 TUCUMANES» beats became one card (the line «QUEMADAS: CASI 1 DE CADA 10
   DEL PAÍS» is cut); every card is held exactly what the rule asks; flights, zooms and the ash pause are 15–20 %
   shorter. Long source names (IGN, Wikimedia flags, EEAOC RA 370, product ids) are in `story.toml` comments and the
@@ -78,7 +99,17 @@ fframes decodes the whole media folder the first time a frame draws an image: ~1
 (no range) therefore runs in chunks (`INCENDIOS_CHUNKS`, default 6), each in its own process: a probe pass records the
 `<image href>` of every frame without drawing, then the chunk renders with only those rasters (~1.5–1.8 GB RSS). The
 parts are joined without re-encoding and the score is muxed once with the `ffmpeg` CLI. A range (`render 10s..20s`)
-renders in one process as before.
+renders in one process as before (at the draft size unless `--final` or an explicit `--scale`).
+
+Chunks run one after the other on purpose: fframes already keeps both cores of the sandbox busy inside one process, so
+parallel chunks would only double the memory.
+
+### Where the time goes
+
+The 14-year timelapse (≈ 8–12 s) is the expensive part: up to ~50 monthly fire rasters screened together plus a
+full-frame bloom, about 2 s per 1080p frame on 2 cores; the rest of the video costs ~0.15 s per frame. The fire layer
+and the closing embers draw their rasters once and add the bloom in the same filter (`datavid::svg::bloom_screen`);
+before, each group was drawn twice (sharp copy + blurred copy).
 
 ## Sandbox notes
 
