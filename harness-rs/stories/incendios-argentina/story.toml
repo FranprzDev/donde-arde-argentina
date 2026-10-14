@@ -659,8 +659,8 @@ label = "Datos"
 value = "Min. Ambiente · EEAOC · INDEC"
 
 [[credit]]
-label = "Pipeline de Datos, Generación de Video & Producción final:"
-value = "Harness Engineering with AI"
+label = "Autor:"
+value = "FranMC23"
 [[credit]]
-label = "Director & Revisor:"
-value = "Francisco Perez"
+label = "Código:"
+value = "AI Assistance, bajo supervisión humana"
