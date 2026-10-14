@@ -1,4 +1,4 @@
-# Current cut — harness-rs (2026-10-13, 1280×720 draft)
+# Current cut — harness-rs (2026-10-13, v13, 1280×720 draft)
 
 The current video is rendered by `harness-rs/stories/incendios-argentina` (all Rust); its `story.toml` is the source of
 truth for every on-screen text and time. The sections below this one describe v9, the last Python version.
@@ -11,9 +11,13 @@ truth for every on-screen text and time. The sections below this one describe v9
 | 3.40–6.85 | Flat map: rays land, Argentina heats up and cools (heat fades from 6.25) | «EL SOL QUEMA,» (3.40) / «PERO NO PROVOCA» / «INCENDIOS.» (3.95, three lines so the text stays left of the map) — 7 words → 3.45 s, 100 px | warm pad until the cut |
 | 6.85 | **Hard cut**: text out, map near black, the spark (the first VIIRS hotspot, Jan 2012) | — | the music drops; procedural match strike |
 | 6.91–11.41 | The spark; at 7.35 it ignites the 14-year VIIRS timelapse (no pause): big year + monthly curve | «EL HUMANO, SÍ.» (150 px) + «9 DE CADA 10 CON CAUSA CONOCIDA» (66 px) — 10 words → 4.50 s | taiko on «EL HUMANO», riser, hit at 7.35 |
+| 7.35–14.24 | The timelapse, Jan 2012 → Dec 2025 (v13: 6.89 s, was 3.89 s; 1.7716× slower per month, same data) | big year label, then «2012–2025» | drums, a tick each January, hit at 14.24 |
 
 The rest follows the v10 order (scar + «QUEMADAS = CASI 12 TUCUMANES», top 5, Tucumán + Burruyacú Sentinel-2, Entre Ríos
-2020 + Delta Sentinel-2, Comarca Andina, close, sources/credits card), every later mark shifted 0.40 s earlier. Total 59.49 s.
+2020 + Delta Sentinel-2, Comarca Andina, close, sources/credits card), every later mark shifted 0.40 s earlier by the
+opening and 3.0 s later by the longer timelapse (v13). Close «YA NO FALTAN DATOS. / FALTA RESPONSABILIDAD.» 49.69–52.79;
+sources/credits card 53.09–59.49 (6.40 s: an exception Francisco approved, the reading rule would ask 9.40 s; v12 held it
+9.40 s and it read as dead air), with the music carrying to the last frame. Total 59.49 s.
 «9 DE CADA 10» keeps its assert (`hum_10 == 9`: 90.2 % human among fires with a known cause, Min. Ambiente 1993–2019).
 
 ---

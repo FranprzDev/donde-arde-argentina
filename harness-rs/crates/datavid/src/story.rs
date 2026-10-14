@@ -10,6 +10,7 @@
 //! [marks]   name = "expression"      time marks: arithmetic over params, other marks and facts (see expr.rs)
 //! [[assert]] fact = "...", eq | gt | ge | lt | le = ..., why = "..."
 //! [[beat]]  id, kind, start, end (mark expressions), enabled (default true), exempt_words (sources cards)
+//!   [beat.hold_exception] hold, approved_by, why   a hold under the reading rule that a person signed off (see rules.rs)
 //!   [[beat.text]] id, template ("{fact|filter}" placeholders), size (px), font, t0, t1 (mark expressions; t1 = the
 //!                 moment the text starts to fade out), card (texts read together), label (not prose: no word count),
 //!                 allow_digits ("why a literal digit is fine")
@@ -177,6 +178,17 @@ pub struct BeatCfg {
     pub text: Vec<TextCfg>,
     /// kind = "sources": size of the rows generated from [[source]] and [[credit]]
     pub card_size: Option<f64>,
+    /// an approved exception to rule 3 (the reading hold) for this beat's cards
+    pub hold_exception: Option<HoldException>,
+}
+
+/// A hold shorter than the reading rule asks, accepted only with who approved it and why; QA prints it on every report.
+#[derive(Debug, Clone, Deserialize)]
+pub struct HoldException {
+    /// the hold (s) the beat's cards must still meet
+    pub hold: f64,
+    pub approved_by: String,
+    pub why: String,
 }
 fn yes() -> bool {
     true
@@ -232,6 +244,7 @@ pub struct Beat {
     pub start: f64,
     pub end: f64,
     pub exempt_words: bool,
+    pub hold_exception: Option<HoldException>,
     pub texts: Vec<Text>,
 }
 
@@ -336,7 +349,7 @@ impl Story {
                     });
                 }
             }
-            beats.push(Beat { id: b.id.clone(), kind: b.kind.clone(), start, end, exempt_words: b.exempt_words, texts });
+            beats.push(Beat { id: b.id.clone(), kind: b.kind.clone(), start, end, exempt_words: b.exempt_words, hold_exception: b.hold_exception.clone(), texts });
         }
         let sources = file.sources.iter().map(|lv| (lv.label.clone(), lv.value.clone())).collect();
         let credits = file.credits.iter().map(|lv| (lv.label.clone(), lv.value.clone())).collect();
