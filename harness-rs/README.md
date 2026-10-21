@@ -15,6 +15,11 @@ harness-rs/
     svg.rs                     SVG frame helpers (text slams, glow, grain, vignette)
     audio/                     synth voices, scipy-compatible Butterworth filters, reverb, limiter, EBU R128
     qa.rs                      QA report
+    media.rs                   ffmpeg/ffprobe helpers: probe, loudness of an MP4, black frames, contact sheet
+  crates/promo/                short-form promo / vertical ad template (binary `promo`), see docs/PROMO_VIDEOS.md
+  examples/spookmc-ad4/        the SpookMC ad #4 as a template config (promo.toml explicit, brief.toml texts-in)
+  templates/promo/             starter brief + timed voice-over script for a new ad
+  build-support/x264_rpath.rs  shared build script (libx264 ABI 163 rpath) for crates that link fframes
   stories/incendios-argentina/ «¿Dónde arde Argentina?» (the first story)
     story.toml                 beats, texts, data bindings, asserts, sources, credits
     src/prep/                  FIRMS VIIRS, MODIS MCD64A1, causes, Tucumán, geometry
@@ -76,6 +81,28 @@ The sources/credits card is exempt from the word cap but not from the size rule.
 `[beat.hold_exception]` (`hold`, `approved_by`, `why`): its cards then meet that hold instead of the reading rule, and
 `check`/`qa` print the rule's own figure next to the approved one with who approved it. It is for an editorial call a
 person signed off, never to make a failing check pass (today: the credits card, see below).
+
+## Promo videos (vertical ads)
+
+`crates/promo` turns texts + clips into a short-form promo (9:16, 16:9 or 1:1): clips with push-ins, alpha motion
+graphics with their own sound effects, cut flashes, an end card, procedural or external music, an optional voice-over,
+−14 LUFS mastering and QA (loudness, true peak, black frames, contact sheet). Burned-in captions are off by default;
+the texts set the timing and are written as an SRT sidecar.
+
+```bash
+source env.sh && cargo build --release -p promo          # ~4 min; config edits need no rebuild
+P=$CARGO_TARGET_DIR/release/promo
+cp -r templates/promo my-ad                                # write one [[beat]] per idea in my-ad/brief.toml
+$P check my-ad/brief.toml                                  # timeline + missing files, no rendering
+$P build my-ad/brief.toml --preview                        # 360p smoke check
+$P build my-ad/brief.toml                                  # 720p draft (default)
+$P build my-ad/brief.toml --final                          # 1080p after approval
+$P batch ads.txt --json                                    # several configs; NDJSON progress, exit codes 0-4
+```
+
+Step-by-step guide, config reference, app integration (JSON in, NDJSON progress, exit codes), sandbox lessons and the
+roadmap: [docs/PROMO_VIDEOS.md](docs/PROMO_VIDEOS.md). The SpookMC ad #4 is the reference example:
+`examples/spookmc-ad4/promo.toml` (explicit cut list) and `brief.toml` (the same ad as beats).
 
 ## The fires story: what changed from v10
 
