@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/datavid", "stories/incendios-argentina"]
+members = ["crates/datavid", "crates/promo", "stories/incendios-argentina"]
 
 [workspace.package]
 edition = "2024"

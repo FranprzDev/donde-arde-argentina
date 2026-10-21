@@ -1831,6 +1831,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "promo"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "datavid",
+ "fframes",
+ "png 0.17.16",
+ "serde",
+ "serde_json",
+ "toml",
+ "ttf-parser",
+]
+
+[[package]]
 name = "pulp"
 version = "0.22.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
