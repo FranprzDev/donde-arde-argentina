@@ -27,6 +27,12 @@ promos, `docs/PROMO_VIDEOS.md` first.
   (`setsid nohup cargo build --release -p promo > /tmp/build.log 2>&1 &`) and poll the log.
 - **Do not render while cargo links.** The final link of a fframes binary needs ~2 GB; a render running at the same
   time got the linker OOM-killed (`ld terminated with signal 9`). Build, then render.
+- **Build one fframes binary at a time** (`cargo build --release -p promo`, then `-p incendios-argentina`): a
+  `--workspace` build compiles both in parallel and got OOM-killed (the system container keeps ~2.7 GB of the 7 GB).
+  If the incendios link is still killed: `cargo rustc --release -p incendios-argentina --bin incendios -j 1 --
+  -C codegen-units=2 -C link-arg=-Wl,--no-keep-memory`.
+- A sandbox restart wipes `/tmp` and the apt packages (the repo, toolchain and target dir persist): keep build logs
+  under `/workspace/work/`.
 - Write MP4s to local disk (`/tmp`) and copy them: `+faststart` fails with "Error writing trailer" on JuiceFS.
   `promo mux` already does this.
 - One fframes process keeps both cores busy: render chunks sequentially, not in parallel.
