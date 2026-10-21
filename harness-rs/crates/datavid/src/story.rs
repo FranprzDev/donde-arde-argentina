@@ -259,7 +259,8 @@ pub struct Story {
     pub credits: Vec<(String, String)>,
 }
 
-fn expand_env(s: &str) -> String {
+/// Expand `${VAR:-default}` and `${VAR}` from the environment (used for input paths in configs).
+pub fn expand_env(s: &str) -> String {
     // ${VAR:-default} and ${VAR}
     let mut out = String::new();
     let mut rest = s;
