@@ -14,11 +14,13 @@
 //! * [`audio`]: procedural synthesis primitives, Butterworth filters, FFT reverb, a true-peak limiter and EBU R128
 //!   loudness mastering (default −14 LUFS).
 //! * [`qa`]: a machine- and human-readable QA report.
+//! * [`media`]: ffmpeg/ffprobe helpers (probe, loudness of an encoded file, black frames, contact sheet, frames).
 pub mod audio;
 pub mod ease;
 pub mod expr;
 pub mod facts;
 pub mod geo;
+pub mod media;
 pub mod npy;
 pub mod qa;
 pub mod raster;
