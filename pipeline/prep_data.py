@@ -3,9 +3,12 @@ Filter: type == 0 ("presumed vegetation fire") AND confidence in {nominal, high}
 Province: point-in-polygon against INDEC Censo 2022 province polygons (dissolved radios, ../contar-con-datos-agua/v7/data/natgeo_v7.json);
 points that fall in no polygon (coast/border simplification) -> nearest province centroid-free: nearest polygon by distance.
 Outputs data/points.npz (lon, lat, t = fractional month index since 2012-01, prov idx) and data/stats.json."""
-import json, numpy as np, pandas as pd, shapely
-D = '../data/raw/'
-G = json.load(open('../data/natgeo_v7.json'))
+import json
+from pathlib import Path
+import numpy as np, pandas as pd, shapely
+ROOT = Path(__file__).resolve().parents[1]
+D = str(ROOT / 'data' / 'raw') + '/'
+G = json.load(open(ROOT / 'data' / 'natgeo_v7.json'))
 NAMES = {'02':'CABA','06':'Buenos Aires','10':'Catamarca','14':'Córdoba','18':'Corrientes','22':'Chaco','26':'Chubut','30':'Entre Ríos',
  '34':'Formosa','38':'Jujuy','42':'La Pampa','46':'La Rioja','50':'Mendoza','54':'Misiones','58':'Neuquén','62':'Río Negro','66':'Salta',
  '70':'San Juan','74':'San Luis','78':'Santa Cruz','82':'Santa Fe','86':'Santiago del Estero','90':'Tucumán','94':'Tierra del Fuego'}
@@ -25,7 +28,7 @@ dist = np.stack([shapely.distance(p, pts) for p in polys], 1)
 prov[miss] = dist.argmin(1)
 d['prov'] = [codes[i] for i in prov]
 print('type0', len(d), 'of', tot_all, 'unmatched->nearest', len(miss), 'max dist deg', dist.min(1).max() if len(miss) else 0)
-np.savez_compressed(D + 'points.npz', lon=lon.astype(np.float32), lat=lat.astype(np.float32), t=d.t.values.astype(np.float32), prov=prov.astype(np.int8), conf=(d.confidence.map({'l':0,'n':1,'h':2}).values).astype(np.int8))
+np.savez_compressed(str(ROOT / 'data' / 'raw' / 'points.npz'), lon=lon.astype(np.float32), lat=lat.astype(np.float32), t=d.t.values.astype(np.float32), prov=prov.astype(np.int8), conf=(d.confidence.map({'l':0,'n':1,'h':2}).values).astype(np.int8))
 S = {}
 S['total_used'] = int(len(d)); S['total_all_types'] = int(tot_all); S['type0_all_conf'] = n_type0; S['type0_low_conf_dropped'] = n_type0_low
 S['by_year'] = {int(k): int(v) for k, v in d.groupby('year').size().items()}
@@ -38,7 +41,7 @@ d['m'] = dt.dt.month
 S['by_month_all'] = {int(k): int(v) for k, v in d.groupby('m').size().items()}
 S['by_year_month'] = {f'{y}-{m:02d}': int(v) for (y, m), v in d.groupby(['year', 'm']).size().items()}
 S['peak_month'] = max(S['by_year_month'], key=S['by_year_month'].get)
-json.dump(S, open(D + 'stats.json', 'w'), ensure_ascii=False, indent=1)
+json.dump(S, open(ROOT / 'data' / 'raw' / 'stats.json', 'w'), ensure_ascii=False, indent=1)
 print(json.dumps({k: S[k] for k in ['total_used','type0_all_conf','type0_low_conf_dropped','by_year','mean_excl_2020','median_excl_2020','ratio_2020_vs_median_others','peak_month']}, indent=1))
 print(list(S['by_prov'].items())[:10])
 for p in ['Entre Ríos','Córdoba','Corrientes','Chaco','Chubut','Río Negro','Neuquén']: print(p, S['by_prov_year'][p])
@@ -52,5 +55,5 @@ S['share_norte_NEA_NOA'] = sum(P.get(p, 0) for r in ['NEA','NOA'] for p in REG[r
 S['share_patagonia'] = sum(P.get(p, 0) for p in REG['Patagonia']) / T
 S['share_aug_sep'] = (S['by_month_all'][8] + S['by_month_all'][9]) / T
 S['years_peak_in_aug_sep'] = [y for y in range(2012, 2026) if max(range(1, 13), key=lambda m: S['by_year_month'].get(f'{y}-{m:02d}', 0)) in (8, 9)]
-json.dump(S, open(D + 'stats.json', 'w'), ensure_ascii=False, indent=1)
+json.dump(S, open(ROOT / 'data' / 'raw' / 'stats.json', 'w'), ensure_ascii=False, indent=1)
 for k in ['share_norte_NEA_NOA','share_patagonia','share_aug_sep','years_peak_in_aug_sep']: print(k, S[k])
